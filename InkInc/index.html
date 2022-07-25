@@ -36,7 +36,7 @@
     var player;
     var collectibles = [];
     var objects = [];
-    var maps = [];
+    var levels = [];
 
     //inkMap[posY][posX]
     var inkMap = new Array(10);
@@ -103,6 +103,7 @@
         //Handle player movements
         let prevX = player.posX;
         let prevY = player.posY;
+        //if the blob actually moves, moved is set to true
         let moved = false;
         if (isValidPos(prevX-1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown) {
             player.x -= 80;
@@ -148,6 +149,11 @@
             this.animations = animations;
             scene.add.existing(this);
             this.setScale(0.6);
+        }
+    }
+    class Level{
+        constructor(scene, layout, startingInk, startX, startY, objects, collectibles) {
+
         }
     }
     function toString (inkMap) {
