@@ -37,6 +37,16 @@
     var player;
     var collectibles = [];
     var objects = [];
+
+    //impassable objects
+    var barriers = [];
+
+    //passable objects, but has a wall on the [direction] side
+    var leftWalls = [];
+    var rightWalls = [];
+    var upWalls = [];
+    var downWalls = [];
+
     var levels = [];
     //var door = [];
 
@@ -58,7 +68,7 @@
     var graphics;
 
     function preload() {
-        this.load.image('inkBlob', 'inkblob/ink blob.png');
+        this.load.image('inkBlob', 'inkblob/InkBlob.png');
         this.load.image('inkSpot', 'levels/InkSploch.png')
         this.load.image('inkedTile', 'levels/InkedTile.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
