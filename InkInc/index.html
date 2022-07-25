@@ -32,11 +32,14 @@
     var game = new Phaser.Game(config);
 
     //Game Objects
-    var level = new Array(10);
+    var inkSpots;
+    var mapTiles;
     var player;
     var collectibles = [];
     var objects = [];
     var levels = [];
+    //var door = [];
+
 
     //inkMap[posY][posX]
     var inkMap = new Array(10);
@@ -44,9 +47,7 @@
     for (let i = 0; i < inkMap.length; i++) {
         inkMap[i] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     }
-    for (let i = 0; i < level.length; i++) {
-        level[i] = new Array(10);
-    }
+
 
 
     //Keyboard controls
@@ -58,15 +59,17 @@
 
     function preload() {
         this.load.image('inkBlob', 'inkblob/ink blob.png');
+        this.load.image('inkSpot', 'levels/InkSploch.png')
+        this.load.image('inkedTile', 'levels/InkedTile.png');
+        this.load.image('greenTile', 'levels/GreenTile.png')
         /*
 
         */
         //let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
         //this.load.tilemapTiledJSON('tilemap', "texture.json");
-        this.load.image('inkSpot', 'levels/InkSploch')
-        this.load.image('whiteTile', 'levels/WhiteTile.png');
-        this.load.image('inkedTile', 'levels/InkedTile.png');
+        //this.load.image('whiteTile', 'levels/WhiteTile.png');
     }
+
 
     function create() {
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
@@ -74,13 +77,27 @@
 
         //create all animations
         //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
+        mapTiles = new Array(10);
+        for (let i = 0; i < mapTiles.length; i++) {
+            mapTiles[i] = new Array(10);
+            for (let j = 0; j < mapTiles[i].length; j++) {
+                mapTiles[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'greenTile')
+            }
+        }
+        inkSpots = new Array(10);
+        for (let i = 0; i < inkSpots.length; i++) {
+            inkSpots[i] = new Array(10);
+            for (let j = 0; j < inkSpots[i].length; j++) {
+                inkSpots[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'inkSpot')
+                inkSpots[i][j].visible = false;
+            }
+        }
 
 
         createMap(0);
 
         //player = new Player(this, 400, 400, 'slime', playerAnimations);
         player = new Player(this, 0, 0, 'inkBlob', null);
-        inkMap[0][0] = 1;
         //player.play(player.animations['idle']);
 
         //Set up user input
@@ -98,8 +115,37 @@
 
         graphics = this.add.graphics();
         console.log("done with create")
+        update()
     }
 
+    /*
+    class Door {
+
+    }
+
+     */
+
+
+    class Player extends Phaser.Physics.Arcade.Sprite {
+        animations;
+        inkLevel = 10;
+        //posX is the 0 based index of the inkblob in the map
+        //x is the pixel position on the screen
+        posX = 0;
+        posY = 0;
+
+        constructor(scene, posX, posY, spritesheet, animations) {
+            super(scene, posX * 80 + 40, posY * 80 + 40, spritesheet);
+            this.animations = animations;
+            scene.add.existing(this);
+            this.setScale(0.5);
+        }
+    }
+
+    class Level {
+        constructor(scene, layout, startingInk, startX, startY, objects, collectibles) {
+        }
+    }
     //creates each level layout based on the level id
     function createMap(id) {
 
@@ -144,7 +190,16 @@
             }
         }
         console.log(toString(inkMap));
-        update()
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                if (inkMap[i][j] === 1) {
+                    inkSpots[i][j].visible = true;
+                } else if (inkMap[i][j] === 0) {
+                    inkSpots[i][j].visible = false;
+                }
+            }
+        }
+        //update()
     }
 
     class Player extends Phaser.Physics.Arcade.Sprite {
