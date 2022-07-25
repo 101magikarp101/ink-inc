@@ -10,7 +10,7 @@
 
 <body>
 
-    <script>
+<script>
 
     var config = {
         type: Phaser.AUTO,
@@ -30,9 +30,9 @@
     };
 
     var game = new Phaser.Game(config);
-    
+
     //Game Objects
-    var level;
+    var level = new Array(10);
     var player;
     var collectibles = [];
     var objects = [];
@@ -44,6 +44,10 @@
     for (let i = 0; i < inkMap.length; i++) {
         inkMap[i] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     }
+    for (let i = 0; i < level.length; i++) {
+        level[i] = new Array(10);
+    }
+
 
     //Keyboard controls
     var cursors;
@@ -52,45 +56,50 @@
 
     var graphics;
 
-    function preload()
-    {
+    function preload() {
         this.load.image('inkBlob', 'inkblob/ink blob.png');
-        //this.load.atlas('seacreatures', 'assets/seacreatures_json.png', 'assets/seacreatures_json.json');
+        /*
+
+        */
+        //let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
+        //this.load.tilemapTiledJSON('tilemap', "texture.json");
+        this.load.image('inkSpot', 'levels/InkSploch')
+        this.load.image('whiteTile', 'levels/WhiteTile.png');
+        this.load.image('inkedTile', 'levels/InkedTile.png');
     }
 
-    function create()
-    {
+    function create() {
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
-            //we dont have one
+        //we dont have one
 
-       //create all animations
-       //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
+        //create all animations
+        //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
 
-       //Create the platforms and the player character set to collide with the platforms
-       //createPlatforms(this); just delete this line
+
         createMap(0);
 
-       //player = new Player(this, 400, 400, 'slime', playerAnimations);
+        //player = new Player(this, 400, 400, 'slime', playerAnimations);
         player = new Player(this, 0, 0, 'inkBlob', null);
         inkMap[0][0] = 1;
-       //player.play(player.animations['idle']);
+        //player.play(player.animations['idle']);
 
-       //Set up user input
-       cursors = this.input.keyboard.createCursorKeys();
-       keyA = this.input.keyboard.addKey('A');
+        //Set up user input
+        cursors = this.input.keyboard.createCursorKeys();
+        keyA = this.input.keyboard.addKey('A');
         keyD = this.input.keyboard.addKey('D');
         keyW = this.input.keyboard.addKey('W');
         keyS = this.input.keyboard.addKey('S');
-       space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-       keyA.on('down', move);
+        keyA.on('down', move);
         keyD.on('down', move);
         keyW.on('down', move);
         keyS.on('down', move);
 
-       graphics = this.add.graphics();
-       console.log("done with create")
+        graphics = this.add.graphics();
+        console.log("done with create")
     }
+
     //creates each level layout based on the level id
     function createMap(id) {
 
@@ -100,25 +109,26 @@
     {
 
     }
-    function move () {
+
+    function move() {
         //Handle player movements
         let prevX = player.posX;
         let prevY = player.posY;
         //if the blob actually moves, moved is set to true
         let moved = false;
-        if (isValidPos(prevX-1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown) {
+        if (isValidPos(prevX - 1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown) {
             player.x -= 80;
             player.posX -= 1;
             moved = true;
-        } else if (isValidPos(prevX+1, prevY) && keyD.isDown && !keyW.isDown && !keyS.isDown) {
+        } else if (isValidPos(prevX + 1, prevY) && !keyA.isDown && keyD.isDown && !keyW.isDown && !keyS.isDown) {
             player.x += 80;
             player.posX += 1;
             moved = true;
-        } else if (isValidPos(prevX, prevY-1) && keyW.isDown && !keyS.isDown) {
+        } else if (isValidPos(prevX, prevY - 1) && !keyA.isDown && !keyD.isDown && keyW.isDown && !keyS.isDown) {
             player.y -= 80;
             player.posY -= 1;
             moved = true;
-        } else if (isValidPos(prevX, prevY+1) && keyS.isDown) {
+        } else if (isValidPos(prevX, prevY + 1) && !keyA.isDown && !keyD.isDown && !keyW.isDown && keyS.isDown) {
             player.y += 80;
             player.posY += 1;
             moved = true;
@@ -136,25 +146,25 @@
         console.log(toString(inkMap));
         update()
     }
-    class Player extends Phaser.Physics.Arcade.Sprite
-    {
+
+    class Player extends Phaser.Physics.Arcade.Sprite {
         animations;
         inkLevel = 10;
         //posX is the 0 based index of the inkblob in the map
         //x is the pixel position on the screen
         posX = 0;
         posY = 0;
-        constructor(scene, posX, posY, spritesheet, animations)
-        {
+
+        constructor(scene, posX, posY, spritesheet, animations) {
             super(scene, posX * 80 + 40, posY * 80 + 40, spritesheet);
             this.animations = animations;
             scene.add.existing(this);
             this.setScale(0.6);
         }
     }
-    class Level{
-        constructor(scene, layout, startingInk, startX, startY, objects, collectibles) {
 
+    class Level {
+        constructor(scene, layout, startingInk, startX, startY, objects, collectibles) {
         }
     }
     function toString (inkMap) {
@@ -164,10 +174,11 @@
         }
         return result;
     }
-    function isValidPos (posX, posY) {
+
+    function isValidPos(posX, posY) {
         return posX >= 0 && posX < 10 && posY >= 0 && posY < 10;
     }
-    </script>
+</script>
 
 </body>
 
