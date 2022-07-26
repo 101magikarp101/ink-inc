@@ -28,14 +28,16 @@
     };
 
     var game = new Phaser.Game(config);
-
+    //constants
     const LEFT = 'left';
     const RIGHT = 'right';
     const UP = 'up';
     const DOWN = 'down';
+    const ROCK = 'rock';
     //Game Objects
     var inkSpots;
     var mapTiles;
+    var rocks = [];
     var player;
     var collectibles = [];
     var objects;
@@ -55,6 +57,7 @@
 
     //inkMap[posY][posX]
     var inkMap = new Array(10);
+
 
     for (let i = 0; i < inkMap.length; i++) {
         inkMap[i] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -104,6 +107,7 @@
             mapTiles[i] = new Array(10);
             for (let j = 0; j < mapTiles[i].length; j++) {
                 mapTiles[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'greenTile')
+
             }
         }
         inkSpots = new Array(10);
@@ -211,6 +215,8 @@
             this.type = type;
             this.posX = posX;
             this.posY = posY;
+            this.movable = movable;
+            scene.add.existing(this);
         }
         //why not? object.movable is the same good point
         //couldnt we do a while function so if u are big enough to move the rock it is movable but if ur too small it doesnt move
@@ -334,7 +340,12 @@
     }
 
     class Level {
-        constructor(scene, layout, startingInk, startX, startY, objects, collectibles) {
+        constructor(scene, layout, startingInk, startX, startY, objects, collectibles, levelNum) {
+            player.inkLevel = startingInk;
+            player.x = startX * 80;
+            player.y = startY * 80;
+            player.posX = startX;
+            player.posY = startY;
         }
     }
     //creates each level layout based on the level id
@@ -342,8 +353,7 @@
 
     }
 
-    function update()
-    {
+    function update() {
 
     }
 
@@ -353,6 +363,18 @@
         let prevY = player.posY;
         //if the blob actually moves, moved is set to true
         let moved = false;
+        //direction moved, for rock checks
+        //let diMoveX;
+        //let diMoveY;
+        let direction;
+        if ((player.inkLevel <= 0 && inkMap[player.posX][player.posY]===0))
+        {
+            console.log('No ink left to grab or move.');
+            return;
+        }
+        //direction = DOWN;
+        //objects[player.posY][player.posX-1].push(direction);
+        //console.log('should have pushed down')
         if (isValidPos(prevX - 1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown) {
             direction = LEFT
             if ((objects[player.posY][player.posX-1].type === 'rock' && objects[player.posY][player.posX-1].pushRock(direction))
@@ -391,15 +413,30 @@
                 moved = true;
             }
         }
+        console.log(prevX + "," + prevY + " to " + player.posX + "," + player.posY);
+        console.log('about to leave or pick up ink');
         if (moved) {
+            //ink code
             console.log(player.inkLevel);
-            if (inkMap[player.posY][player.posX] === 0) {
+            if (inkMap[prevY][prevX] === 0) {
                 player.inkLevel--;
                 inkMap[prevY][prevX] = 1;
-            } else if (inkMap[player.posY][player.posX] === 1 && inkMap[prevY][prevX] === 0) {
-                inkMap[player.posY][player.posX] = 0;
-                inkMap[prevY][prevX] = 1;
+            } else if (inkMap[prevY][prevX] === 1) {
+                player.inkLevel++;
+                inkMap[prevY][prevX] = 0;
             }
+            console.log('finished with the ink, starting rock check');
+            //rock code
+            /* eliah's version
+            for (let i = 0; i < rocks.length; i++){
+                console.log('rock: ' + rocks[i].size)
+                if (player.posX === rocks[i].posX && player.posY === rocks[i].posY){
+                    rocks[i].push(diMoveX, diMoveY);
+                }
+            }
+
+             */
+            //michael's version (done above)
         }
         console.log(toString(inkMap));
         for (let i = 0; i < 10; i++) {
@@ -414,27 +451,17 @@
         //update()
     }
 
-    class Player extends Phaser.Physics.Arcade.Sprite {
-        animations;
-        inkLevel = 10;
-        //posX is the 0 based index of the inkblob in the map
-        //x is the pixel position on the screen
-        posX = 0;
-        posY = 0;
 
-        constructor(scene, posX, posY, spritesheet, animations) {
-            super(scene, posX * 80 + 40, posY * 80 + 40, spritesheet);
-            this.animations = animations;
-            scene.add.existing(this);
-            this.setScale(0.6);
-        }
-    }
+    /*class Tilestate{
+        let clean[][];
+        let dirty[][];
 
-    class Level {
-        constructor(scene, layout, startingInk, startX, startY, objects, collectibles) {
-        }
+
+
+
     }
-    function toString (inkMap) {
+    */
+    function toString(inkMap) {
         var result = "";
         for (let i of inkMap) {
             result += "[" + i + "], \n";
@@ -443,7 +470,8 @@
     }
 
     function isValidPos(posX, posY) {
-        return posX >= 0 && posX < 10 && posY >= 0 && posY < 10;
+        //console.log(this.textures.getPixel(posX*80, posY*80));
+        return posX >= 0 && posX < 10 && posY >= 0 && posY < 10 /*&& this.textures.getPixel(posX*80, posY*80) !== #24664d*/;
     }
 </script>
 
