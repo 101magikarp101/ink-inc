@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.8" tiledversion="1.8.5" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="80" tileheight="80" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="Downloads/New Ink Inc Tileset.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="10" height="10">
+  <data encoding="csv">
+14,2684354575,2684354575,2684354575,19,19,11,19,19,18,
+17,17,17,17,7,23,17,7,6,23,
+20,17,17,17,12,3,17,7,6,3,
+13,17,22,17,17,17,17,7,6,16,
+13,17,17,17,22,17,17,12,3,17,
+10,22,17,17,17,17,17,17,17,17,
+4,17,17,17,22,17,17,17,17,22,
+17,17,17,17,17,17,17,22,17,17,
+22,17,17,17,22,17,17,17,17,17,
+17,17,17,17,17,17,17,17,17,24
+</data>
+ </layer>
+</map>
