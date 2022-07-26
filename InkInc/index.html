@@ -74,6 +74,7 @@
         this.load.image('inkSpot', 'levels/InkSploch.png')
         this.load.image('inkedTile', 'levels/InkedTile.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
+        this.load.image('rock', 'levels/boulder.png');
         /*
 
         */
@@ -89,6 +90,15 @@
 
         //create all animations
         //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
+        var test = new Array(10);
+        for (let i = 0; i < test.length; i++) {
+            test[i] = new Array(10);
+            for (let j = 0; j < test[i].length; j++) {
+                test[i][j] = i + ' ' + j;
+
+            }
+        }
+        console.log(toString(test))
         mapTiles = new Array(10);
         for (let i = 0; i < mapTiles.length; i++) {
             mapTiles[i] = new Array(10);
@@ -107,11 +117,15 @@
         objects = new Array(10);
         for (let i = 0; i < objects.length; i++) {
             objects[i] = new Array(10);
+            for (let j = 0; j < objects[i].length; j++) {
+                objects[i][j] = new Obj('rock', this, j, i, 'rock', true);
+            }
         }
-        objects[1][0] = new Rock(5, 1, 0);
-        objects[1][0] = this.add.image(120, 40, 'rock');
+        //todo: make everything not a rock^^
+        objects[1][1] = new Rock(this, 5, 1, 1);
         rocks = new Array(0);
-        rocks.push(objects[1][0]);
+        rocks.push(objects[1][1]);
+        console.log("done with init1")
 
 
         createMap(0);
@@ -186,14 +200,14 @@
     //good point
     //let objects[][];
     //then a 0 is nothing, 1 is button, 2 is rock, 3 is bottle
-    class Object {
+    class Obj extends Phaser.Physics.Arcade.Sprite {
         type;
         movable;
         posX;
         posY;
         image;
-        constructor(type, posX, posY){
-            this.movable = (type === 'rock');
+        constructor(type, scene, posX, posY, image, movable) {
+            super(scene, posX * 80 + 40, posY * 80 + 40, image);
             this.type = type;
             this.posX = posX;
             this.posY = posY;
@@ -205,12 +219,14 @@
 
     }
 
-    class Rock extends Object{
+    class Rock extends Obj{
         size;
-        constructor (size, posX, posY) {
-            super('rock', posX, posY);
+        constructor (scene, size, posX, posY) {
+            super('rock', scene, posX, posY, 'rock', true);
             this.size = size;
+            console.log('create rock size:' + this.size + ' at ' + posX + ', ' + posY);
         }
+        /* eliah's version
         push(posXChange, posYChange){
             if (player.inkLevel >= this.size){
                 this.posX += posXChange;
@@ -219,7 +235,8 @@
                 this.image.posY += posYChange * 80;
                 //check if run into a wall later
                 //right
-            }/*checking if the player was too small (do better later, just a waiting thing)*/ else if (player.inkLevel < this.size /*|| (collided with wall)*/){
+            }
+            checking if the player was too small (do better later, just a waiting thing) else if (player.inkLevel < this.size || (collided with wall)){
                 player.posX -= posXChange;
                 player.posY -= posYChange;
                 player.x -= posXChange * 80;
@@ -229,7 +246,90 @@
                 this.image.posX -= posXChange * 80;
                 this.image.posY -= posYChange * 80;
             }
+
             console.log("pushed: x: " + player.x + ", " + player.y);
+        }
+         */
+        //weight refers to total rock weight
+        pushRock(direction) {
+            let totalWeight = 0;
+            let targetRocks = new Array(0);
+            console.log('pushRock called: X: ' + this.posX + ", Y: " + this.posY)
+            if (direction === LEFT) {
+                let tempX = this.posX;
+                while (isValidPos(tempX, this.posY) && objects[this.posY][tempX].type === 'rock') {
+                    totalWeight += objects[this.posY][tempX].size
+                    targetRocks.push(objects[this.posY][tempX]);
+                    tempX--;
+                }
+                if (player.inkLevel >= totalWeight && isValidPos(tempX, this.posY)) {
+                    for (let i = targetRocks.length - 1; i >= 0; i--) {
+                        objects[targetRocks[i].posY][targetRocks[i].posX-1] = objects[targetRocks[i].posY][targetRocks[i].posX]
+                        objects[targetRocks[i].posY][targetRocks[i].posX-1].posX -= 1;
+                        objects[targetRocks[i].posY][targetRocks[i].posX-1].posX -= 80;
+                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true)
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (direction === RIGHT) {
+                let tempX = this.posX;
+                while (isValidPos(tempX, this.posY) && objects[this.posY][tempX].type === 'rock') {
+                    totalWeight += objects[this.posY][tempX].size
+                    targetRocks.push(objects[this.posY][tempX]);
+                    tempX++;
+                }
+                console.log(targetRocks)
+                if (player.inkLevel >= totalWeight && isValidPos(tempX, this.posY)) {
+                    for (let i = targetRocks.length - 1; i >= 0; i--) {
+                        objects[targetRocks[i].posY][targetRocks[i].posX+1] = new Rock(targetRocks[i].size, targetRocks[i].posX, targetRocks[i].posY);
+                        console.log(objects[targetRocks[i].posY][targetRocks[i].posX+1])
+                        objects[targetRocks[i].posY][targetRocks[i].posX+1].posX += 1;
+                        objects[targetRocks[i].posY][targetRocks[i].posX+1].image.x += 80;
+                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true)
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (direction === UP) {
+                let tempY = this.posY;
+                while (isValidPos(this.posX, tempY) && objects[tempY][this.posX].type === 'rock') {
+                    totalWeight += objects[tempY][this.posX].size
+                    targetRocks.push(objects[tempY][this.posX]);
+                    tempY--;
+                }
+                if (player.inkLevel >= totalWeight && isValidPos(this.posX, tempY)) {
+                    for (let i = targetRocks.length - 1; i >= 0; i--) {
+                        objects[targetRocks[i].posY-1][targetRocks[i].posX] = objects[targetRocks[i].posY][targetRocks[i].posX]
+                        objects[targetRocks[i].posY-1][targetRocks[i].posX] -= 1;
+                        objects[targetRocks[i].posY-1][targetRocks[i].posX] -= 80;
+                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true)
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (direction === DOWN) {
+                let tempY = this.posY;
+                while (isValidPos(this.posX, tempY) && objects[tempY][this.posX].type === 'rock') {
+                    totalWeight += objects[tempY][this.posX].size
+                    targetRocks.push(objects[tempY][this.posX]);
+                    tempY++;
+                }
+                if (player.inkLevel >= totalWeight && isValidPos(this.posX, tempY)) {
+                    for (let i = targetRocks.length - 1; i >= 0; i--) {
+                        objects[targetRocks[i].posY+1][targetRocks[i].posX] = objects[targetRocks[i].posY][targetRocks[i].posX];
+                        objects[targetRocks[i].posY+1][targetRocks[i].posX] += 1;
+                        objects[targetRocks[i].posY+1][targetRocks[i].posX] += 80;
+                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true);
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         }
     }
 
@@ -254,21 +354,42 @@
         //if the blob actually moves, moved is set to true
         let moved = false;
         if (isValidPos(prevX - 1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown) {
-            player.x -= 80;
-            player.posX -= 1;
-            moved = true;
+            direction = LEFT
+            if ((objects[player.posY][player.posX-1].type === 'rock' && objects[player.posY][player.posX-1].pushRock(direction))
+                || objects[player.posY][player.posX-1].type !== 'rock') {
+                console.log('push should have been called');
+                player.x -= 80;
+                player.posX -= 1;
+                moved = true;
+            }
         } else if (isValidPos(prevX + 1, prevY) && !keyA.isDown && keyD.isDown && !keyW.isDown && !keyS.isDown) {
-            player.x += 80;
-            player.posX += 1;
-            moved = true;
+            direction = 'right'
+            console.log(objects[player.posY][player.posX+1].type);
+            if ((objects[player.posY][player.posX+1].type === 'rock' && objects[player.posY][player.posX+1].pushRock(direction))
+                || objects[player.posY][player.posX+1].type !== 'rock') {
+                console.log('push should have been called');
+                player.x += 80;
+                player.posX += 1;
+                moved = true;
+            }
         } else if (isValidPos(prevX, prevY - 1) && !keyA.isDown && !keyD.isDown && keyW.isDown && !keyS.isDown) {
-            player.y -= 80;
-            player.posY -= 1;
-            moved = true;
+            direction = 'up'
+            if ((objects[player.posY-1][player.posX].type === 'rock' && objects[player.posY-1][player.posX].pushRock(direction))
+                || objects[player.posY-1][player.posX].type !== 'rock') {
+                console.log('push should have been called');
+                player.y -= 80;
+                player.posY -= 1;
+                moved = true;
+            }
         } else if (isValidPos(prevX, prevY + 1) && !keyA.isDown && !keyD.isDown && !keyW.isDown && keyS.isDown) {
-            player.y += 80;
-            player.posY += 1;
-            moved = true;
+            direction = 'down'
+            if ((objects[player.posY+1][player.posX].type === 'rock' && objects[player.posY+1][player.posX].pushRock(direction))
+                || objects[player.posY+1][player.posX].type !== 'rock') {
+                console.log('push should have been called');
+                player.y += 80;
+                player.posY += 1;
+                moved = true;
+            }
         }
         if (moved) {
             console.log(player.inkLevel);
