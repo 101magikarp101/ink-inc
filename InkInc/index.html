@@ -5,16 +5,14 @@
 <head>
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
-
 </head>
-
 <body>
 
 <script>
 
     var config = {
         type: Phaser.AUTO,
-        width: 800,
+        width: 1300,
         height: 800,
         backgroundColor: '#ffffff',
         physics: {
@@ -31,12 +29,16 @@
 
     var game = new Phaser.Game(config);
 
+    const LEFT = 'left';
+    const RIGHT = 'right';
+    const UP = 'up';
+    const DOWN = 'down';
     //Game Objects
     var inkSpots;
     var mapTiles;
     var player;
     var collectibles = [];
-    var objects = [];
+    var objects;
 
     //impassable objects
     var barriers = [];
@@ -102,6 +104,14 @@
                 inkSpots[i][j].visible = false;
             }
         }
+        objects = new Array(10);
+        for (let i = 0; i < objects.length; i++) {
+            objects[i] = new Array(10);
+        }
+        objects[1][0] = new Rock(5, 1, 0);
+        objects[1][0] = this.add.image(120, 40, 'rock');
+        rocks = new Array(0);
+        rocks.push(objects[1][0]);
 
 
         createMap(0);
@@ -138,7 +148,8 @@
 
     class Player extends Phaser.Physics.Arcade.Sprite {
         animations;
-        inkLevel = 10;
+        inkLevel = 30;
+        //document.getElementById("myInkLevel").value = this.inkLevel;
         //posX is the 0 based index of the inkblob in the map
         //x is the pixel position on the screen
         posX = 0;
@@ -149,6 +160,76 @@
             this.animations = animations;
             scene.add.existing(this);
             this.setScale(0.5);
+        }
+    }
+
+    class Tile {
+        type;
+        isLeftWall;
+        isRightWall;
+        isUpWall;
+        isDownWall;
+        isWall;
+        image;
+        constructor(type) {
+            //stuff lmao
+            //also we hopefully wont have to do this
+            //like the tilemap should place it for us
+            //hopefully
+        }
+    }
+
+    //like rocks and buttons and bottles
+    //we could just do a 2d array
+    //like
+    //we can do object.isMovable or something
+    //good point
+    //let objects[][];
+    //then a 0 is nothing, 1 is button, 2 is rock, 3 is bottle
+    class Object {
+        type;
+        movable;
+        posX;
+        posY;
+        image;
+        constructor(type, posX, posY){
+            this.movable = (type === 'rock');
+            this.type = type;
+            this.posX = posX;
+            this.posY = posY;
+        }
+        //why not? object.movable is the same good point
+        //couldnt we do a while function so if u are big enough to move the rock it is movable but if ur too small it doesnt move
+        //in a subclass
+        //like we extend teh object class
+
+    }
+
+    class Rock extends Object{
+        size;
+        constructor (size, posX, posY) {
+            super('rock', posX, posY);
+            this.size = size;
+        }
+        push(posXChange, posYChange){
+            if (player.inkLevel >= this.size){
+                this.posX += posXChange;
+                this.posY += posYChange;
+                this.image.posX += posXChange * 80;
+                this.image.posY += posYChange * 80;
+                //check if run into a wall later
+                //right
+            }/*checking if the player was too small (do better later, just a waiting thing)*/ else if (player.inkLevel < this.size /*|| (collided with wall)*/){
+                player.posX -= posXChange;
+                player.posY -= posYChange;
+                player.x -= posXChange * 80;
+                player.y -= posYChange * 80;
+                this.posX -= posXChange;
+                this.posY -= posYChange;
+                this.image.posX -= posXChange * 80;
+                this.image.posY -= posYChange * 80;
+            }
+            console.log("pushed: x: " + player.x + ", " + player.y);
         }
     }
 
