@@ -41,15 +41,18 @@
     //Game Objects
     var inkSpots;
     var mapTiles;
-    var rocks = [];
+    var rocks;
+    var sdoors; //size doors, not key doors
     var player;
-    var collectibles = [];
+    var collectibles;
     var objects;
 
     //impassable objects
     var barriers = [];
 
+    //backup in case color-wall detection is bad
     //passable objects, but has a wall on the [direction] side
+    //based off Main Tileset INK. Inc..tsx
     var leftWalls = [];
     var rightWalls = [];
     var upWalls = [];
@@ -122,17 +125,8 @@
                 inkSpots[i][j].visible = false;
             }
         }
-        objects = new Array(10);
-        for (let i = 0; i < objects.length; i++) {
-            objects[i] = new Array(10);
-            for (let j = 0; j < objects[i].length; j++) {
-                objects[i][j] = new Obj('rock', this, j, i, 'rock', true);
-            }
-        }
-        //todo: make everything not a rock^^
-        objects[1][1] = new Rock(this, 5, 1, 1);
         rocks = new Array(0);
-        rocks.push(objects[1][1]);
+        rocks.push(new Rock(this, 5, 1, 1));
         console.log("done with init1")
 
 
@@ -170,7 +164,7 @@
 
     class Player extends Phaser.Physics.Arcade.Sprite {
         animations;
-        inkLevel = 30;
+        inkLevel = 8;
         //document.getElementById("myInkLevel").value = this.inkLevel;
         //posX is the 0 based index of the inkblob in the map
         //x is the pixel position on the screen
@@ -267,76 +261,78 @@
             console.log('pushRock called: X: ' + this.posX + ", Y: " + this.posY)
             if (direction === LEFT) {
                 let tempX = this.posX;
-                while (isValidPos(tempX, this.posY) && objects[this.posY][tempX].type === 'rock') {
-                    totalWeight += objects[this.posY][tempX].size
-                    targetRocks.push(objects[this.posY][tempX]);
+                while (isValidPos(tempX, this.posY) && isRock(tempX, this.posY)) {
+                    let rock = getRock(tempX, this.posY)
+                    totalWeight += rock.size
+                    targetRocks.push(rock);
                     tempX--;
                 }
                 if (player.inkLevel >= totalWeight && isValidPos(tempX, this.posY)) {
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
-                        objects[targetRocks[i].posY][targetRocks[i].posX-1] = objects[targetRocks[i].posY][targetRocks[i].posX]
-                        objects[targetRocks[i].posY][targetRocks[i].posX-1].posX -= 1;
-                        objects[targetRocks[i].posY][targetRocks[i].posX-1].posX -= 80;
-                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true)
+                        targetRocks[i].posX -= 1;
+                        targetRocks[i].x -= 80;
                     }
+                    console.log('left true')
                     return true;
                 } else {
+                    console.log('left false')
                     return false;
                 }
             } else if (direction === RIGHT) {
                 let tempX = this.posX;
-                while (isValidPos(tempX, this.posY) && objects[this.posY][tempX].type === 'rock') {
-                    totalWeight += objects[this.posY][tempX].size
-                    targetRocks.push(objects[this.posY][tempX]);
+                while (isValidPos(tempX, this.posY) && isRock(tempX, this.posY)) {
+                    let rock = getRock(tempX, this.posY)
+                    totalWeight += rock.size
+                    targetRocks.push(rock);
                     tempX++;
                 }
-                console.log(targetRocks)
                 if (player.inkLevel >= totalWeight && isValidPos(tempX, this.posY)) {
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
-                        objects[targetRocks[i].posY][targetRocks[i].posX+1] = new Rock(targetRocks[i].size, targetRocks[i].posX, targetRocks[i].posY);
-                        console.log(objects[targetRocks[i].posY][targetRocks[i].posX+1])
-                        objects[targetRocks[i].posY][targetRocks[i].posX+1].posX += 1;
-                        objects[targetRocks[i].posY][targetRocks[i].posX+1].image.x += 80;
-                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true)
+                        targetRocks[i].posX += 1;
+                        targetRocks[i].x += 80;
                     }
+                    console.log('right true')
                     return true;
                 } else {
+                    console.log('right false')
                     return false;
                 }
             } else if (direction === UP) {
                 let tempY = this.posY;
-                while (isValidPos(this.posX, tempY) && objects[tempY][this.posX].type === 'rock') {
-                    totalWeight += objects[tempY][this.posX].size
-                    targetRocks.push(objects[tempY][this.posX]);
+                while (isValidPos(this.posX, tempY) && isRock(this.posX, tempY)) {
+                    let rock = getRock(this.posX, tempY)
+                    totalWeight += rock.size
+                    targetRocks.push(rock);
                     tempY--;
                 }
                 if (player.inkLevel >= totalWeight && isValidPos(this.posX, tempY)) {
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
-                        objects[targetRocks[i].posY-1][targetRocks[i].posX] = objects[targetRocks[i].posY][targetRocks[i].posX]
-                        objects[targetRocks[i].posY-1][targetRocks[i].posX] -= 1;
-                        objects[targetRocks[i].posY-1][targetRocks[i].posX] -= 80;
-                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true)
+                        targetRocks[i].posY -= 1;
+                        targetRocks[i].y -= 80;
                     }
+                    console.log('up true')
                     return true;
                 } else {
+                    console.log('up false')
                     return false;
                 }
             } else if (direction === DOWN) {
                 let tempY = this.posY;
-                while (isValidPos(this.posX, tempY) && objects[tempY][this.posX].type === 'rock') {
-                    totalWeight += objects[tempY][this.posX].size
-                    targetRocks.push(objects[tempY][this.posX]);
+                while (isValidPos(this.posX, tempY) && isRock(this.posX, tempY)) {
+                    let rock = getRock(this.posX, tempY)
+                    totalWeight += rock.size
+                    targetRocks.push(rock);
                     tempY++;
                 }
                 if (player.inkLevel >= totalWeight && isValidPos(this.posX, tempY)) {
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
-                        objects[targetRocks[i].posY+1][targetRocks[i].posX] = objects[targetRocks[i].posY][targetRocks[i].posX];
-                        objects[targetRocks[i].posY+1][targetRocks[i].posX] += 1;
-                        objects[targetRocks[i].posY+1][targetRocks[i].posX] += 80;
-                        objects[targetRocks[i].posY][targetRocks[i].posX] = new Obj('rock', this, targetRocks[i].posX, targetRocks[i].posY, 'rock', true);
+                        targetRocks[i].posY += 1;
+                        targetRocks[i].y += 80;
                     }
+                    console.log('down true')
                     return true;
                 } else {
+                    console.log('down false')
                     return false;
                 }
             }
@@ -381,37 +377,41 @@
         //console.log('should have pushed down')
         if (isValidPos(prevX - 1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown) {
             direction = LEFT
-            if ((objects[player.posY][player.posX-1].type === 'rock' && objects[player.posY][player.posX-1].pushRock(direction))
-                || objects[player.posY][player.posX-1].type !== 'rock') {
-                console.log('push should have been called');
+            console.log('left pressed');
+            if (isRock(player.posX-1, player.posY) && getRock(player.posX-1, player.posY).pushRock(direction)
+                || !hasObject(player.posX-1, player.posY))
+                /* || (objects[player.posY][player.posX-1].type === 'sDoor' && player.inkLevel <= objects(player.posY][player.posX-1].size)*/{
+                console.log('left push should have been called');
                 player.x -= 80;
                 player.posX -= 1;
                 moved = true;
             }
         } else if (isValidPos(prevX + 1, prevY) && !keyA.isDown && keyD.isDown && !keyW.isDown && !keyS.isDown) {
             direction = 'right'
-            console.log(objects[player.posY][player.posX+1].type);
-            if ((objects[player.posY][player.posX+1].type === 'rock' && objects[player.posY][player.posX+1].pushRock(direction))
-                || objects[player.posY][player.posX+1].type !== 'rock') {
-                console.log('push should have been called');
+            console.log('right pressed');
+            if (isRock(player.posX+1, player.posY) && getRock(player.posX+1, player.posY).pushRock(direction)
+                || !hasObject(player.posX+1, player.posY)) {
+                console.log('right push should have been called');
                 player.x += 80;
                 player.posX += 1;
                 moved = true;
             }
         } else if (isValidPos(prevX, prevY - 1) && !keyA.isDown && !keyD.isDown && keyW.isDown && !keyS.isDown) {
             direction = 'up'
-            if ((objects[player.posY-1][player.posX].type === 'rock' && objects[player.posY-1][player.posX].pushRock(direction))
-                || objects[player.posY-1][player.posX].type !== 'rock') {
-                console.log('push should have been called');
+            console.log('up pressed');
+            if (isRock(player.posX, player.posY-1) && getRock(player.posX, player.posY-1).pushRock(direction)
+                || !hasObject(player.posX, player.posY-1)) {
+                console.log('up push should have been called');
                 player.y -= 80;
                 player.posY -= 1;
                 moved = true;
             }
         } else if (isValidPos(prevX, prevY + 1) && !keyA.isDown && !keyD.isDown && !keyW.isDown && keyS.isDown) {
-            direction = 'down'
-            if ((objects[player.posY+1][player.posX].type === 'rock' && objects[player.posY+1][player.posX].pushRock(direction))
-                || objects[player.posY+1][player.posX].type !== 'rock') {
-                console.log('push should have been called');
+            direction = 'down';
+            console.log('down pressed');
+            if (isRock(player.posX, player.posY+1) && getRock(player.posX, player.posY+1).pushRock(direction)
+                || !hasObject(player.posX, player.posY+1)) {
+                console.log('down push should have been called');
                 player.y += 80;
                 player.posY += 1;
                 moved = true;
@@ -472,6 +472,33 @@
         }
         return result;
     }
+    function getRock(posX, posY) {
+        for (let rock of rocks) {
+            if (rock.posX === posX && rock.posY === posY) {
+                return rock;
+            }
+        }
+        return null;
+    }
+    function isRock(posX, posY){
+        return getRock(posX, posY) !== null;
+    }
+    function hasObject(posX, posY) {
+        return getRock(posX, posY) !== null;
+        //|| door || ink etc.
+    }
+    /*
+    function getsDoor(posX, posY) {
+        for (let sdoor of sdoors) {
+            if (sdoor.posX === posX && sdoor.posY === posY) {
+                return sdoor;
+            }
+        }
+        return null;
+    }
+    function issDoor(posX, posY){
+        return getsDoor(posX, posY) !== null;
+    }*/
 
     function isValidPos(posX, posY) {
         //console.log(this.textures.getPixel(posX*80, posY*80));
