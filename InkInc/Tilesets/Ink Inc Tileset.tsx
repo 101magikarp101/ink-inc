@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset version="1.8" tiledversion="1.8.5" name="texture" tilewidth="80" tileheight="80" tilecount="25" columns="5">
- <image source="../Documents/Ink_Inc/texture.png" width="400" height="400"/>
+ <image source="Tilesets/texture.png" width="400" height="400"/>
  <tile id="4"/>
  <tile id="18"/>
  <tile id="17"/>

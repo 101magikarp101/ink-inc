@@ -60,6 +60,14 @@
 
     var levels = [];
     //var door = [];
+    const STARTX = [0, 0, 2, 0, 1, 0, 0, 0];
+    const STARTY = [4, 4, 4, 4, 2, 0, 0, 0];
+    var ROCKS;
+    var SDOORS;
+    const GOALX = [4, 9, 2, 9, 9, 2, 9, 9];
+    const GOALY = [6, 4, 1, 4, 4, 0, 0, 3];
+    const STARTINGINK = [];
+
 
     var _this;
     //inkMap[posY][posX]
@@ -85,10 +93,15 @@
         this.load.image('inkedTile', 'levels/InkedTile.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
         this.load.image('rock', 'objects/Boulder.png');
-        this.load.image('sDoor', 'objects/DoorOpen.png');
-        /*
-
-        */
+        this.load.image('sDoor', 'objects/DoorClosed.png');
+        this.load.image('level0', 'levels/Level1.png');
+        this.load.image('level1', 'levels/Level2.png');
+        this.load.image('level2', 'levels/Level3.png');
+        this.load.image('level3', 'levels/Level4.png');
+        this.load.image('level4', 'levels/Level5.png');
+        this.load.image('level5', 'levels/Level6.png');
+        this.load.image('level6', 'levels/Level7.png');
+        this.load.image('level7', 'levels/Level8.png');
         //let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
         //this.load.tilemapTiledJSON('tilemap', "texture.json");
         //this.load.image('whiteTile', 'levels/WhiteTile.png');
@@ -99,45 +112,42 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
         //we dont have one
         _this = this;
+        ROCKS =
+            [[],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                []];
+        SDOORS =
+            [[],
+                [new SDoor(this, 4/*to do*/, 6, 4, 'leftRight')],
+                [new SDoor(this, 4/*to do*/, 2, 2, 'upDown')],
+                [new SDoor(this, 4/*to do*/, 8, 4, 'leftRight')],
+                [],
+                [],
+                [],
+                [new SDoor(this, 4/*to do*/, 6, 0, 'leftRight')]];
+        for (let rocks of ROCKS) {
+            for (let rock of rocks) {
+                rock.disabled = true;
+            }
+        }
+        for (let sdoors of SDOORS) {
+            for (let sdoor of sdoors) {
+                sdoor.disabled = true;
+            }
+        }
         //create all animations
         //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
-        var test = new Array(10);
-        for (let i = 0; i < test.length; i++) {
-            test[i] = new Array(10);
-            for (let j = 0; j < test[i].length; j++) {
-                test[i][j] = i + ' ' + j;
-
-            }
-        }
-        console.log(toString(test))
-        mapTiles = new Array(10);
-        for (let i = 0; i < mapTiles.length; i++) {
-            mapTiles[i] = new Array(10);
-            for (let j = 0; j < mapTiles[i].length; j++) {
-                mapTiles[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'greenTile')
-
-            }
-        }
-        inkSpots = new Array(10);
-        for (let i = 0; i < inkSpots.length; i++) {
-            inkSpots[i] = new Array(10);
-            for (let j = 0; j < inkSpots[i].length; j++) {
-                inkSpots[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'inkSpot')
-                inkSpots[i][j].visible = false;
-            }
-        }
-        rocks = new Array(0);
-        rocks.push(new Rock(this, 5, 1, 1));
-        console.log("done with init1")
-        sdoors = new Array(0);
-        sdoors.push(new SDoor(this, 5, 2, 4));
-        console.log("done with init2, doors")
 
 
-        createMap(0);
 
+        console.log('Finished most of creation');
         //player = new Player(this, 400, 400, 'slime', playerAnimations);
-        player = new Player(this, 0, 0, 'inkBlob', null);
+
         //player.play(player.animations['idle']);
 
         //Set up user input
@@ -165,19 +175,20 @@
 
      */
 
-
     class Player extends Phaser.Physics.Arcade.Sprite {
         animations;
         inkLevel = 15;
         //document.getElementById("myInkLevel").value = this.inkLevel;
         //posX is the 0 based index of the inkblob in the map
         //x is the pixel position on the screen
-        posX = 0;
-        posY = 0;
+        posX;
+        posY;
 
         constructor(scene, posX, posY, spritesheet, animations) {
             super(scene, posX * 80 + 40, posY * 80 + 40, spritesheet);
             this.animations = animations;
+            this.posX = posX;
+            this.posY = posY;
             scene.add.existing(this);
             this.setScale(0.5);
         }
@@ -344,29 +355,14 @@
     }
     class SDoor extends Obj{
         size;
-        constructor(scene, size, posX, posY) {
-            super('sDoor', scene, posX, posY, null/*sDoor*/, true);
+        //leftRight or upDown
+        orientation;
+        constructor(scene, size, posX, posY, orientation) {
+            super('sDoor', scene, posX, posY, 'sDoor', true);
             this.size = size;
+            this.orientation = orientation;
             console.log('create door with size:' + this.size + ' at ' + posX + ', ' + posY);
         }
-    }
-
-    class Level {
-        levelNum;
-        bitmap;
-        constructor(scene, layout, startingInk, startX, startY, objects, collectibles, levelNum) {
-            player.inkLevel = startingInk;
-            player.x = startX * 80;
-            player.y = startY * 80;
-            player.posX = startX;
-            player.posY = startY;
-            this.levelNum = levelNum;
-            //this.bitmap = new BitmapData(this);
-        }
-    }
-    //creates each level layout based on the level id
-    function createMap(id) {
-
     }
 
     function update() {
@@ -468,7 +464,13 @@
                 }
             }
         }
-        if (player.inkLevel <= 0) {
+        //win
+        if (player.posY === levels[curLev].goalY && player.posX === levels[curLev].goalX){
+            console.log('YOU WIN LEVEL ' + curLev);
+            //curLev++;
+            //
+        }
+        else if (player.inkLevel <= 0) {
 
             console.log('YOU LOSE');
         }
@@ -521,27 +523,37 @@
     }*/
 var col
     function isValidPos(posX, posY) {
-        col = _this.textures.getPixel(posX*80-40, posY*80-40, 'greenTile');
+        return posX >= 0 && posX < 10 && posY >= 0 && posY < 10 && !isSolidWall(posX, posY)/*&& this.textures.getPixel(posX*80, posY*80) !== #24664d*/;
+    }
+    /*
+
+
+    * */
+    function isSolidWall(posX, posY) {
+        let col;
+        col = _this.textures.getPixel(posX*80+40, posY*80+40, levels[curLev].image);
+        console.log('col is ' + col + ' in isSolidWall');
         if (col !== null){
             let cout = (Phaser.Display.Color.ComponentToHex(col.r) + Phaser.Display.Color.ComponentToHex(col.g) + Phaser.Display.Color.ComponentToHex(col.b));
-            let cout2 = Phaser.Display.Color.ComponentToHex(col.rgba);
-            console.log('not null, ' + cout + ' hopefully same: ' + cout2);
+            return cout === '24664d';
         } else {
-            console.log('moving to ' + col + ' colored pixel');
+            console.log('isSolidWall is broken');
         }
-        return posX >= 0 && posX < 10 && posY >= 0 && posY < 10 /*&& this.textures.getPixel(posX*80, posY*80) !== #24664d*/;
     }
-    function isWall(posX1, posY1, posX2, posY2) {
-        let isX = true;
+    function isThruWall(posX1, posY1, posX2, posY2) {
+        let min;
+        let max;
+        posX1 *= 80;
+        posX2 *= 80;
+        posY1 *= 80;
+        posY2 *= 80;
         if (posX1 === posX2) {
-            let min = Math.min(posY1, posY2);
-            let max = posY1 + posY2 - min;
-            isX = false;
-            //lmao
+            min = Math.min(posY1, posY2);
+            max = posY1 + posY2 - min;
+            let col = _this.textures.getPixel(posX, posY, levels[curLev].image);
         } else if (posY1 === posY2) {
-            let min = Math.min(posX1, posX2);
-            let max = posX1 + posX2 - min;
-
+            min = Math.min(posX1, posX2);
+            max = posX1 + posX2 - min;
         }
         /*for (let i = 0; i<(max-min);  i++){
             let curTex;
