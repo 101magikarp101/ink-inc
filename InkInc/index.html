@@ -52,7 +52,7 @@
 
     //backup in case color-wall detection is bad
     //passable objects, but has a wall on the [direction] side
-    //based off Main Tileset INK. Inc..tsx
+    //based off New Ink Inc Tileset
     var leftWalls = [];
     var rightWalls = [];
     var upWalls = [];
@@ -164,7 +164,7 @@
 
     class Player extends Phaser.Physics.Arcade.Sprite {
         animations;
-        inkLevel = 8;
+        inkLevel = 15;
         //document.getElementById("myInkLevel").value = this.inkLevel;
         //posX is the 0 based index of the inkblob in the map
         //x is the pixel position on the screen
@@ -452,6 +452,10 @@
                 }
             }
         }
+        if (player.inkLevel <= 0) {
+
+            console.log('YOU LOSE');
+        }
         //update()
     }
 
@@ -499,10 +503,31 @@
     function issDoor(posX, posY){
         return getsDoor(posX, posY) !== null;
     }*/
-
+var col
     function isValidPos(posX, posY) {
         //console.log(this.textures.getPixel(posX*80, posY*80));
         return posX >= 0 && posX < 10 && posY >= 0 && posY < 10 /*&& this.textures.getPixel(posX*80, posY*80) !== #24664d*/;
+    }
+    function isWall(posX1, posY1, posX2, posY2) {
+        let isX = true;
+        if (posX1 === posX2) {
+            let min = Math.min(posY1, posY2);
+            let max = posY1 + posY2 - min;
+            isX = false;
+            //lmao
+        } else if (posY1 === posY2) {
+            let min = Math.min(posX1, posX2);
+            let max = posX1 + posX2 - min;
+
+        }
+        /*for (let i = 0; i<(max-min);  i++){
+            if (isX){
+                
+
+
+
+
+         */
     }
 </script>
 
