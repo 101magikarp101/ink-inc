@@ -5,6 +5,7 @@
 <head>
     <Title>|INK Incorporated presents INK Inc|</Title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+
 </head>
 <body>
 
@@ -13,7 +14,6 @@
 </h1>
 
 <script>
-
     var config = {
         type: Phaser.AUTO,
         width: 1300,
@@ -61,7 +61,7 @@
     var levels = [];
     //var door = [];
 
-
+    var _this;
     //inkMap[posY][posX]
     var inkMap = new Array(10);
 
@@ -84,7 +84,8 @@
         this.load.image('inkSpot', 'levels/InkSploch.png')
         this.load.image('inkedTile', 'levels/InkedTile.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
-        this.load.image('rock', 'levels/boulder.png');
+        this.load.image('rock', 'objects/Boulder.png');
+        this.load.image('sDoor', 'objects/DoorOpen.png');
         /*
 
         */
@@ -97,7 +98,7 @@
     function create() {
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
         //we dont have one
-
+        _this = this;
         //create all animations
         //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
         var test = new Array(10);
@@ -128,6 +129,9 @@
         rocks = new Array(0);
         rocks.push(new Rock(this, 5, 1, 1));
         console.log("done with init1")
+        sdoors = new Array(0);
+        sdoors.push(new SDoor(this, 5, 2, 4));
+        console.log("done with init2, doors")
 
 
         createMap(0);
@@ -338,14 +342,26 @@
             }
         }
     }
+    class SDoor extends Obj{
+        size;
+        constructor(scene, size, posX, posY) {
+            super('sDoor', scene, posX, posY, null/*sDoor*/, true);
+            this.size = size;
+            console.log('create door with size:' + this.size + ' at ' + posX + ', ' + posY);
+        }
+    }
 
     class Level {
+        levelNum;
+        bitmap;
         constructor(scene, layout, startingInk, startX, startY, objects, collectibles, levelNum) {
             player.inkLevel = startingInk;
             player.x = startX * 80;
             player.y = startY * 80;
             player.posX = startX;
             player.posY = startY;
+            this.levelNum = levelNum;
+            //this.bitmap = new BitmapData(this);
         }
     }
     //creates each level layout based on the level id
@@ -505,7 +521,14 @@
     }*/
 var col
     function isValidPos(posX, posY) {
-        //console.log(this.textures.getPixel(posX*80, posY*80));
+        col = _this.textures.getPixel(posX*80-40, posY*80-40, 'greenTile');
+        if (col !== null){
+            let cout = (Phaser.Display.Color.ComponentToHex(col.r) + Phaser.Display.Color.ComponentToHex(col.g) + Phaser.Display.Color.ComponentToHex(col.b));
+            let cout2 = Phaser.Display.Color.ComponentToHex(col.rgba);
+            console.log('not null, ' + cout + ' hopefully same: ' + cout2);
+        } else {
+            console.log('moving to ' + col + ' colored pixel');
+        }
         return posX >= 0 && posX < 10 && posY >= 0 && posY < 10 /*&& this.textures.getPixel(posX*80, posY*80) !== #24664d*/;
     }
     function isWall(posX1, posY1, posX2, posY2) {
@@ -521,8 +544,10 @@ var col
 
         }
         /*for (let i = 0; i<(max-min);  i++){
+            let curTex;
             if (isX){
-                
+                col = _this.textures.getPixel(min+i, posY1, 'greenTile');
+                curTex = Phaser.Display.Color.ComponentToHex(col.r) + Phaser.Display.Color.ComponentToHex(col.g) + Phaser.Display.Color.ComponentToHex(col.b);
 
 
 
