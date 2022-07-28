@@ -43,7 +43,11 @@
     var inkSpots;
     var rocks;
     var sdoors; //size doors, not key doors
+    var bdoors;
+    var buttons;
+    var inkWells;
     var player;
+    var playerInk;
     var goal;
     var numLevels = 7; //if the first level is level 0
 
@@ -210,14 +214,18 @@
     }
     class Level {
         levelNum;
+        startingInk;
         image;
         rocks;
         sdoors;
+        bdoors;
+        inkWells;
+        buttons;
         goalX;
         goalY;
         startX;
         startY;
-        constructor(scene, startingInk, startX, startY, rocks, sdoors, goalX, goalY, levelNum) {
+        constructor(scene, startingInk, startX, startY, rocks, sdoors, bdoors, inkWells, buttons, goalX, goalY, levelNum) {
             /*
             player.inkLevel = startingInk;
             player.x = startX * 80;
@@ -225,9 +233,13 @@
             player.posX = startX;
             player.posY = startY;*/
             _this.add.image(400, 400, scene)
+            this.startingInk = startingInk;
             this.startX = startX;
             this.startY = startY;
             this.levelNum = levelNum;
+            this.bdoors = bdoors;
+            this.inkWells = inkWells;
+            this.buttons = buttons;
             this.goalX = goalX;
             this.goalY = goalY;
             this.image = scene;
@@ -237,68 +249,89 @@
         }
     }
     function makeLevel() {
-        /*
-        mapTiles = new Array(10);
-        for (let i = 0; i < mapTiles.length; i++) {
-            mapTiles[i] = new Array(10);
-            for (let j = 0; j < mapTiles[i].length; j++) {
-                mapTiles[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'greenTile')
+
+        for (let rocks of ROCKS) {
+            for (let rock of rocks) {
+                rock.disabled = true;
             }
         }
-        */
-        /*
-        rocks = new Array(0);
-        rocks.push(new Rock(this, 5, 1, 1));
-        sdoors = new Array(0);
-        sdoors.push(new SDoor(this, 5, 2, 4));
-        console.log("done with init2, doors");
-         */
-        //if (numLevels === curLev){
-            //do youWin stuffages;
-        //} else {
-            //forces them back to empty, in case they weren't already
-            inkSpots = null;
-            inkMap = null;
-            let tempLev = new Level('level' + curLev, STARTINGINK[curLev], STARTX[curLev], STARTY[curLev], ROCKS[curLev], SDOORS[curLev], GOALX[curLev], GOALY[curLev], curLev);
-            levels.push(tempLev);
-            console.log('level ' + curLev + ' made');
-            console.log("done with init1 loading current level");
-            inkMap = new Array(10);
-            for (let i = 0; i < inkMap.length; i++) {
-                inkMap[i] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        for (let sdoors of SDOORS) {
+            for (let sdoor of sdoors) {
+                sdoor.disabled = true;
             }
-            //inkMap = [
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            //        ];
-            inkSpots = new Array(10);
-            for (let i = 0; i < inkSpots.length; i++) {
-                inkSpots[i] = new Array(10);
-                for (let j = 0; j < inkSpots[i].length; j++) {
-                    inkSpots[i][j] = _this.add.image(j * 80 + 40, i * 80 + 40, 'inkSpot')
-                    inkSpots[i][j].visible = false;
-                }
+        }
+        for (let buttons of BUTTONS) {
+            for (let button of buttons) {
+                button.disabled = true;
             }
-            player = new Player(_this, levels[curLev].startX, levels[curLev].startY, 'inkBlob', null);
-            //player.posX = levels[curLev].startX;
-            //player.posY = levels[curLev].startY;
-            //player.x = levels[curLev].startX * 80 + 40;
-            //player.y = levels[curLev].startY * 80 + 40;
-            player.inkLevel = levels[curLev].inkLevel;
-            console.log('finished init 2 player creation');
-            rocks = levels[curLev].rocks;
-            console.log("done with init3, rocks");
-            sdoors = levels[curLev].sdoors;
-            console.log("done with init4, sdoors");
-        //}
+        }
+        for (let bdoors of BDOORS) {
+            for (let bdoor of bdoors) {
+                bdoor.disabled = true;
+            }
+        }
+        for (let rock of ROCKS[curLev]){
+            rock.disabled = false;
+            //rock.disableBody(false, false);
+        }
+        for (let sdoor of SDOORS[curLev]){
+            sdoor.disabled = false;
+        }
+        for (let button of BUTTONS[curLev]){
+            button.disabled = false;
+        }
+        for (let bdoor of BDOORS[curLev]){
+            bdoor.disabled = false;
+        }
+        //forces them back to empty, in case they weren't already
+        inkSpots = null;
+        inkMap = null;
+        let tempLev = new Level('level' + curLev, STARTINGINK[curLev], STARTX[curLev], STARTY[curLev], ROCKS[curLev], SDOORS[curLev], BDOORS[curLev], INKWELLS[curLev], BUTTONS[curLev], GOALX[curLev], GOALY[curLev], curLev);
+        levels.push(tempLev);
+        console.log('level ' + curLev + ' made');
+        console.log(tempLev);
+        console.log("done with init1 loading current level");
+        inkMap = new Array(10);
+        for (let i = 0; i < inkMap.length; i++) {
+            inkMap[i] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
+        //inkMap = [
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        //        ];
+        inkSpots = new Array(10);
+        for (let i = 0; i < inkSpots.length; i++) {
+            inkSpots[i] = new Array(10);
+            for (let j = 0; j < inkSpots[i].length; j++) {
+                inkSpots[i][j] = _this.add.image(j * 80 + 40, i * 80 + 40, 'inkSpot')
+                inkSpots[i][j].visible = false;
+            }
+        }
+        player = new Player(_this, levels[curLev].startX, levels[curLev].startY, 'inkBlob', null);
+        //player.posX = levels[curLev].startX;
+        //player.posY = levels[curLev].startY;
+        //player.x = levels[curLev].startX * 80 + 40;
+        //player.y = levels[curLev].startY * 80 + 40;
+        player.inkLevel = levels[curLev].startingInk;
+        console.log('finished init 2 player creation');
+        playerInk = _this.add.text(player.x - 10, player.y - 10, '' + player.inkLevel, {fontSize: '16px', fill: '#ffffff'});
+        playerInk.text = levels[curLev].inkLevel;
+        rocks = levels[curLev].rocks;
+        console.log("done with init4, rocks");
+        sdoors = levels[curLev].sdoors;
+        bdoors = levels[curLev].bdoors;
+        inkWells = levels[curLev].inkWells;
+        buttons = levels[curLev].buttons;
+        console.log("done with init5, sdoors");
+    //}
     }
     //like rocks and buttons and bottles
     //we could just do a 2d array
@@ -573,6 +606,8 @@
                 player.inkLevel++;
                 inkMap[prevY][prevX] = 0;
             }
+            playerInk.setPosition(player.x - 10, player.y - 10);
+            playerInk.text = player.inkLevel;
             console.log('finished with the ink, starting rock check');
             //rock code
             /* eliah's version
@@ -600,7 +635,7 @@
         if (player.posY === levels[curLev].goalY && player.posX === levels[curLev].goalX){
             console.log('YOU WIN LEVEL ' + curLev);
             curLev++;
-            if (curLev === 7) {
+            if (curLev === 8) {
                 //win screen
             } else {
                 makeLevel();
