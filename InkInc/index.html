@@ -38,28 +38,17 @@
     const UP = 'up';
     const DOWN = 'down';
     const ROCK = 'rock';
+    var WALLCOLOR;
     //Game Objects
     var inkSpots;
-    var mapTiles;
     var rocks;
     var sdoors; //size doors, not key doors
     var player;
-    var collectibles;
-    var objects;
+    var goal;
+    var numLevels = 7; //if the first level is level 0
 
-    //impassable objects
-    var barriers = [];
-
-    //backup in case color-wall detection is bad
-    //passable objects, but has a wall on the [direction] side
-    //based off New Ink Inc Tileset
-    var leftWalls = [];
-    var rightWalls = [];
-    var upWalls = [];
-    var downWalls = [];
-
-    var levels = [];
-    //var door = [];
+    var levels;
+    var curLev = 0;
     const STARTX = [0, 0, 2, 0, 1, 0, 0, 0];
     const STARTY = [4, 4, 4, 4, 2, 0, 0, 0];
     var ROCKS;
@@ -89,8 +78,7 @@
 
     function preload() {
         this.load.image('inkBlob', 'inkblob/InkBlob.png');
-        this.load.image('inkSpot', 'levels/InkSploch.png')
-        this.load.image('inkedTile', 'levels/InkedTile.png');
+        this.load.image('inkSpot', 'levels/InkSploch.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
         this.load.image('rock', 'objects/Boulder.png');
         this.load.image('sDoor', 'objects/DoorClosed.png');
@@ -102,6 +90,7 @@
         this.load.image('level5', 'levels/Level6.png');
         this.load.image('level6', 'levels/Level7.png');
         this.load.image('level7', 'levels/Level8.png');
+
         //let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
         //this.load.tilemapTiledJSON('tilemap', "texture.json");
         //this.load.image('whiteTile', 'levels/WhiteTile.png');
@@ -112,6 +101,18 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
         //we dont have one
         _this = this;
+        this.playerInk = this.add.text(0, 0, "My Name");
+        INKWELLS =
+            [
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                []
+            ];
         ROCKS =
             [[],
                 [],
@@ -150,13 +151,23 @@
 
         //player.play(player.animations['idle']);
 
+        levels = new Array(0);
+        //for (let i = 0; i < 8; i++) {
+            //instead of this for loop, just make a new level whenever curLev changes with curLev instead of I
+        //}
+        //
+        makeLevel();
+        WALLCOLOR = _this.textures.getPixel(0, 0, 'greenTile');
+        //player = new Player(this, levels[curLev].startX, levels[curLev].startY, 'inkBlob', null);
+        //player.inkLevel = levels[curLev].inkLevel;
+        console.log('Finished most of creation');
         //Set up user input
-        cursors = this.input.keyboard.createCursorKeys();
-        keyA = this.input.keyboard.addKey('A');
-        keyD = this.input.keyboard.addKey('D');
-        keyW = this.input.keyboard.addKey('W');
-        keyS = this.input.keyboard.addKey('S');
-        space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        cursors = _this.input.keyboard.createCursorKeys();
+        keyA = _this.input.keyboard.addKey('A');
+        keyD = _this.input.keyboard.addKey('D');
+        keyW = _this.input.keyboard.addKey('W');
+        keyS = _this.input.keyboard.addKey('S');
+        space = _this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         keyA.on('down', move);
         keyD.on('down', move);
@@ -193,23 +204,98 @@
             this.setScale(0.5);
         }
     }
-
-    class Tile {
-        type;
-        isLeftWall;
-        isRightWall;
-        isUpWall;
-        isDownWall;
-        isWall;
+    class Level {
+        levelNum;
         image;
-        constructor(type) {
-            //stuff lmao
-            //also we hopefully wont have to do this
-            //like the tilemap should place it for us
-            //hopefully
+        rocks;
+        sdoors;
+        goalX;
+        goalY;
+        startX;
+        startY;
+        constructor(scene, startingInk, startX, startY, rocks, sdoors, goalX, goalY, levelNum) {
+            /*
+            player.inkLevel = startingInk;
+            player.x = startX * 80;
+            player.y = startY * 80;
+            player.posX = startX;
+            player.posY = startY;*/
+            _this.add.image(400, 400, scene)
+            this.startX = startX;
+            this.startY = startY;
+            this.levelNum = levelNum;
+            this.goalX = goalX;
+            this.goalY = goalY;
+            this.image = scene;
+            this.rocks = rocks;
+            this.sdoors = sdoors;
+            //this.bitmap = new BitmapData(this);
         }
     }
-
+    function makeLevel() {
+        /*
+        mapTiles = new Array(10);
+        for (let i = 0; i < mapTiles.length; i++) {
+            mapTiles[i] = new Array(10);
+            for (let j = 0; j < mapTiles[i].length; j++) {
+                mapTiles[i][j] = this.add.image(j * 80 + 40, i * 80 + 40, 'greenTile')
+            }
+        }
+        */
+        /*
+        rocks = new Array(0);
+        rocks.push(new Rock(this, 5, 1, 1));
+        sdoors = new Array(0);
+        sdoors.push(new SDoor(this, 5, 2, 4));
+        console.log("done with init2, doors");
+         */
+        //if (numLevels === curLev){
+            //do youWin stuffages;
+        //} else {
+            //forces them back to empty, in case they weren't already
+            inkSpots = null;
+            inkMap = null;
+            let tempLev = new Level('level' + curLev, STARTINGINK[curLev], STARTX[curLev], STARTY[curLev], ROCKS[curLev], SDOORS[curLev], GOALX[curLev], GOALY[curLev], curLev);
+            levels.push(tempLev);
+            console.log('level ' + curLev + ' made');
+            console.log("done with init1 loading current level");
+            inkMap = new Array(10);
+            for (let i = 0; i < inkMap.length; i++) {
+                inkMap[i] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            }
+            //inkMap = [
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            //        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            //        ];
+            inkSpots = new Array(10);
+            for (let i = 0; i < inkSpots.length; i++) {
+                inkSpots[i] = new Array(10);
+                for (let j = 0; j < inkSpots[i].length; j++) {
+                    inkSpots[i][j] = _this.add.image(j * 80 + 40, i * 80 + 40, 'inkSpot')
+                    inkSpots[i][j].visible = false;
+                }
+            }
+            player = new Player(_this, levels[curLev].startX, levels[curLev].startY, 'inkBlob', null);
+            //player.posX = levels[curLev].startX;
+            //player.posY = levels[curLev].startY;
+            //player.x = levels[curLev].startX * 80 + 40;
+            //player.y = levels[curLev].startY * 80 + 40;
+            player.inkLevel = levels[curLev].inkLevel;
+            console.log('finished init 2 player creation');
+            rocks = levels[curLev].rocks;
+            console.log("done with init3, rocks");
+            sdoors = levels[curLev].sdoors;
+            console.log("done with init4, sdoors");
+        //}
+    }
     //like rocks and buttons and bottles
     //we could just do a 2d array
     //like
@@ -364,6 +450,19 @@
             console.log('create door with size:' + this.size + ' at ' + posX + ', ' + posY);
         }
     }
+    class InkWell extends Obj{
+        ink;
+        constructor(scene, ink, posX, posY) {
+            super('inkWell', scene, posX, posY, 'inkWell', false);
+            this.ink = ink;
+            console.log('create inkWell with ink: ' + this.ink)
+        }
+        collect() {
+            player.inkLevel += this.ink;
+            this.ink = 0;
+            this.disableBody(true, true);
+        }
+    }
 
     function update() {
 
@@ -397,8 +496,13 @@
                 player.x -= 80;
                 player.posX -= 1;
                 moved = true;
+            } else if (isSdoor(player.posX-1, player.posY) && getSdoor(player.posX-1, player.posY).canThruSdoor(direction)) {
+                player.x -= 80;
+                player.posX -= 1;
+                console.log('moving thru door: x: ' + player.posX + ', y: ' + player.posY);
+                moved = true;
             }
-        } else if (isValidPos(prevX + 1, prevY) && !keyA.isDown && keyD.isDown && !keyW.isDown && !keyS.isDown) {
+        } else if (isValidPos(prevX + 1, prevY) && !keyA.isDown && keyD.isDown && !keyW.isDown && !keyS.isDown && !isThruWall(prevX, prevY, prevX + 1, prevY)) {
             direction = 'right'
             console.log('right pressed');
             if (isRock(player.posX+1, player.posY) && getRock(player.posX+1, player.posY).pushRock(direction)
@@ -471,7 +575,6 @@
             //
         }
         else if (player.inkLevel <= 0) {
-
             console.log('YOU LOSE');
         }
         //update()
@@ -521,7 +624,6 @@
     function issDoor(posX, posY){
         return getsDoor(posX, posY) !== null;
     }*/
-var col
     function isValidPos(posX, posY) {
         return posX >= 0 && posX < 10 && posY >= 0 && posY < 10 && !isSolidWall(posX, posY)/*&& this.textures.getPixel(posX*80, posY*80) !== #24664d*/;
     }
@@ -550,21 +652,23 @@ var col
         if (posX1 === posX2) {
             min = Math.min(posY1, posY2);
             max = posY1 + posY2 - min;
-            let col = _this.textures.getPixel(posX, posY, levels[curLev].image);
+            console.log('Y diff: min: ' + min + ', max: ' + max)
+            for (let i = 0; i<4; i++) {
+                if (isColor(posX1 + 40, min + 78 + i, WALLCOLOR)) {
+                    return true;
+                }
+            }
         } else if (posY1 === posY2) {
             min = Math.min(posX1, posX2);
             max = posX1 + posX2 - min;
+            console.log('X diff: min: ' + min + ', max: ' + max)
+            for (let i = 0; i<4; i++) {
+                if (isColor(min + 78 + i, posY1 + 40, WALLCOLOR)){
+                    return true;
+                }
+            }
         }
-        /*for (let i = 0; i<(max-min);  i++){
-            let curTex;
-            if (isX){
-                col = _this.textures.getPixel(min+i, posY1, 'greenTile');
-                curTex = Phaser.Display.Color.ComponentToHex(col.r) + Phaser.Display.Color.ComponentToHex(col.g) + Phaser.Display.Color.ComponentToHex(col.b);
-
-
-
-
-         */
+        return false;
     }
 </script>
 
