@@ -57,10 +57,13 @@
     const STARTY = [4, 4, 4, 4, 2, 0, 0, 0];
     var ROCKS;
     var SDOORS;
+    var BDOORS;
+    var BUTTONS;
     var INKWELLS;
     const GOALX = [3, 9, 2, 9, 9, 2, 9, 9];
     const GOALY = [6, 4, 1, 4, 4, 0, 0, 3];
-    const STARTINGINK = [18, 9, 8, 9, 10, 20, 19, 12];//not counting some inkwells cus idk the values
+    const STARTINGINK = [20, 10, 9, 25, 15, 15, 12, 25];//not counting some inkwells cus idk the values and we using this to calc start ink
+
 
 
     var _this;
@@ -86,7 +89,12 @@
         this.load.image('inkSpot', 'levels/InkSploch.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
         this.load.image('rock', 'objects/Boulder.png');
-        this.load.image('sDoor', 'objects/DoorClosed.png');
+        this.load.image('sDoor', 'objects/DoorOpen.png');
+        this.load.image('bDoorOH', 'objects/BDoorHorizontal.png');
+        this.load.image('bDoorOV', 'objects/BDoorVertical.png');
+        this.load.image('bDoorCH', 'objects/DoorClosed.png');
+        this.load.image('bDoorCV', 'objects/BDoorVertical.png');
+        this.load.image('button', 'objects/Button.png');
         this.load.image('level0', 'levels/Level1.png');
         this.load.image('level1', 'levels/Level2.png');
         this.load.image('level2', 'levels/Level3.png');
@@ -106,7 +114,28 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
         //we dont have one
         _this = this;
-        this.playerInk = this.add.text(0, 0, "My Name");
+        BDOORS =
+            [
+                [],
+                [new BDoor(_this, 6, 4, false)],
+                [new BDoor(_this, 2, 2, false)],
+                [],
+                [],
+                [],
+                [new BDoor(_this, 7, 0, false)],
+                []
+            ];
+        BUTTONS =
+            [
+                [],
+                [new Button(_this, 5, 4, BDOORS[1][0])],
+                [new Button(_this, 7, 1, BDOORS[2][0])],
+                [],
+                [],
+                [],
+                [new Button(_this, 2, 3, BDOORS[6][0])],
+                []
+            ];
         INKWELLS =
             [
                 [],
@@ -114,8 +143,8 @@
                 [],
                 [],
                 [],
-                [],
-                [],
+                [new InkWell(_this, 7, 4, 0), new InkWell(_this, 5, 1, 3), new InkWell(_this, 5, 2, 3), new InkWell(_this, 2, 9, 5), new InkWell(_this, 4, 4, 6), new InkWell(_this, 3, 1, 8)],
+                [new InkWell(_this, 8, 4, 5)],
                 []
             ];
         ROCKS =
@@ -124,21 +153,21 @@
                 [],
                 [],
                 [],
+                [new Rock(_this, 8, 8, 4)],
                 [],
-                [],
-                [],
-                []
+                [new Rock(_this, 15, 1, 2)],
+                [new Rock(_this, 15, 8, 3)]
                 ];
         SDOORS =
                 [
                 [],
-                [new SDoor(this, 8/*to do*/, 6, 4, 'leftRight')],
-                [new SDoor(this, 8/*to do*/, 2, 2, 'upDown')],
-                [new SDoor(this, 8/*to do*/, 8, 4, 'leftRight')],
                 [],
                 [],
+                [new SDoor(_this, 13, 8, 4, 'leftRight')],
                 [],
-                [new SDoor(this, 8/*to do*/, 6, 0, 'leftRight')]
+                [new SDoor(_this, 3, 1, 0, 'leftRight'), new SDoor(_this, 3, 2, 1, 'upDown'), new SDoor(_this, 3, 3, 9, 'leftRight')],
+                [new SDoor(_this, 3, 8, 0, 'leftRight')],
+                [new SDoor(_this, 8, 6, 0, 'leftRight')]
                 ];
         for (let rocks of ROCKS) {
             for (let rock of rocks) {
@@ -148,6 +177,16 @@
         for (let sdoors of SDOORS) {
             for (let sdoor of sdoors) {
                 sdoor.disabled = true;
+            }
+        }
+        for (let buttons of BUTTONS) {
+            for (let button of buttons) {
+                button.disabled = true;
+            }
+        }
+        for (let bdoors of BDOORS) {
+            for (let bdoor of bdoors) {
+                bdoor.disabled = true;
             }
         }
         //create all animations
@@ -347,6 +386,7 @@
         posY;
         image;
         constructor(type, scene, posX, posY, image, movable) {
+            console.log('recieved image ' + image + ' for a new Obj and Object');
             super(scene, posX * 80 + 40, posY * 80 + 40, image);
             this.type = type;
             this.posX = posX;
@@ -509,9 +549,39 @@
             this.disableBody(true, true);
         }
     }
+    class Button extends Obj{
+        linkedDoor;
+        pressed;
+        constructor(scene, posX, posY, linkedDoor) {
+            super('button', scene, posX, posY, 'button', false);
+            this.linkedDoor = linkedDoor;
+            console.log('create button' + ' at: ' + posX + ', ' + posY + ' with connected door ' + linkedDoor);
+            this.pressed = false;
+        }
+        pressButton(){
+            if(this.pressed){
+                this.linkedDoor.opener(true);
+            } else {
+                this.linkedDoor.opener(false);
+            }
+        }
+    }
+
+    class BDoor extends Obj{
+        opened;
+        constructor(scene, posX, posY, opened) {
+            super('bDoor', scene, posX, posY, 'bDoor', false);
+            this.opened = opened;
+            console.log('create button door at ' + posX + ', ' + posY);
+        }
+        opener(opened){
+            this.opened = opened;
+        }
+
+    }
 
     function update() {
-        this.playerInk.setPosition(player.x, player.y);
+
     }
 
     function move() {
@@ -597,6 +667,8 @@
         console.log(prevX + "," + prevY + " to " + player.posX + "," + player.posY);
         console.log('about to leave or pick up ink');
         if (moved) {
+            //the player ink tracker
+
             //ink code
             console.log(player.inkLevel);
             if (inkMap[prevY][prevX] === 0) {
@@ -609,17 +681,9 @@
             playerInk.setPosition(player.x - 10, player.y - 10);
             playerInk.text = player.inkLevel;
             console.log('finished with the ink, starting rock check');
-            //rock code
-            /* eliah's version
-            for (let i = 0; i < rocks.length; i++){
-                console.log('rock: ' + rocks[i].size)
-                if (player.posX === rocks[i].posX && player.posY === rocks[i].posY){
-                    rocks[i].push(diMoveX, diMoveY);
-                }
+            if (buttons.length > 0 && prevX === buttons[0].posX && prevY === buttons[0].posY){
+                buttons[0].pressButton();
             }
-
-             */
-            //michael's version (done above)
         }
         console.log(toString(inkMap));
         for (let i = 0; i < 10; i++) {
