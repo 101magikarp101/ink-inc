@@ -240,7 +240,6 @@
         console.log("done with create")
         update()
     }
-
     /*
     class Door {
 
@@ -254,10 +253,11 @@
         }
     }
     function autoplay() {
+        makeLevel();
         isAutoPlaying = true;
         eventNum = 0;
         if (keyF.isDown && !keyG.isDown && !keyH.isDown && !keyJ.isDown) {
-            timer = _this.time.addEvent({ delay: 10, callback: automove, callbackScope: this, repeat: SOLUTIONS[curLev].length});
+            timer = _this.time.addEvent({ delay: 0, callback: automove, callbackScope: this, repeat: SOLUTIONS[curLev].length});
         } else if (!keyF.isDown && keyG.isDown && !keyH.isDown && !keyJ.isDown) {
             timer = _this.time.addEvent({ delay: 100, callback: automove, callbackScope: this, repeat: SOLUTIONS[curLev].length});
         } else if (!keyF.isDown && !keyG.isDown && keyH.isDown && !keyJ.isDown) {
