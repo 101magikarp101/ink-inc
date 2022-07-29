@@ -9,10 +9,6 @@
 </head>
 <body>
 
-<h1>
-    <p style="text-align:center;"><input id="myInkLevel"></p>
-</h1>
-
 <script>
     var config = {
         type: Phaser.AUTO,
@@ -51,18 +47,79 @@
     var goal;
     var numLevels = 7; //if the first level is level 0
 
-    var levels;
-    var curLev = 0;
-    const STARTX = [0, 0, 2, 0, 1, 0, 0, 0];
-    const STARTY = [4, 4, 4, 4, 2, 0, 0, 0];
-    var ROCKS;
-    var SDOORS;
-    var BDOORS;
-    var BUTTONS;
-    var INKWELLS;
-    const GOALX = [3, 9, 2, 9, 9, 2, 9, 9];
-    const GOALY = [6, 4, 1, 4, 4, 0, 0, 3];
-    const STARTINGINK = [20, 10, 9, 25, 15, 15, 12, 25];//not counting some inkwells cus idk the values and we using this to calc start ink
+    var levels = new Array(9);
+    var curLev = 8;
+    const STARTX = [0, 0, 2, 0, 1, 1, 0, 0, 0];
+    const STARTY = [4, 4, 4, 4, 2, 2, 0, 0, 0];
+    //size, x, y
+    var ROCKS =
+        [
+        [],
+        [],
+        [],
+        [],
+        [[7, 8, 4]],
+        [[8, 8, 4]],
+        [],
+        [[15, 1, 2]],
+        [[15, 8, 3]]
+    ];
+    //size, posx, posy, direction
+    var SDOORS =
+        [
+        [],
+        [],
+        [],
+        [[12, 8, 4, 'leftRight']],
+        [],
+        [],
+        [[3, 2, 1, 'upDown'], [7, 3, 9, 'leftRight']],
+        [[3, 8, 0, 'leftRight']],
+        [[8, 6, 0, 'leftRight']]
+    ];
+
+    //x and y
+    var BDOORS =
+        [
+        [],
+        [[6, 4, false, 'leftRight']],
+        [[2, 2, false, 'upDown']],
+        [],
+        [],
+        [],
+        [],
+        [[7, 0, false, 'leftRight']],
+        []
+        ];
+    //x, y, index of corresponding bdoor ([a][b])
+    var BUTTONS =
+        [
+            [],
+            [[4, 4, 1, 0]],
+            [[7, 1, 2, 0]],
+            [],
+            [],
+            [],
+            [],
+            [[2, 3, 7, 0]],
+            [],
+        ];
+    //ink, posX, posY
+    var INKWELLS =
+        [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [[7, 4, 0], [5, 1, 3], [5, 2, 3], [2, 9, 5], [4, 4, 6], [3, 1, 8]],
+        [[8, 4, 5]],
+        []
+    ];
+    const GOALX = [3, 9, 2, 9, 9, 9, 2, 9, 9];
+    const GOALY = [6, 4, 1, 4, 4, 4, 0, 0, 3];
+    const STARTINGINK = [20, 10, 9, 25, 15, 15, 15, 12, 25];//not counting some inkwells cus idk the values and we using this to calc start ink
 
 
 
@@ -89,11 +146,13 @@
         this.load.image('inkSpot', 'levels/InkSploch.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
         this.load.image('rock', 'objects/Boulder.png');
-        this.load.image('sDoor', 'objects/DoorOpen.png');
-        this.load.image('bDoorOH', 'objects/BDoorHorizontal.png');
-        this.load.image('bDoorOV', 'objects/BDoorVertical.png');
-        this.load.image('bDoorCH', 'objects/DoorClosed.png');
-        this.load.image('bDoorCV', 'objects/BDoorVertical.png');
+        this.load.image('sDoorH', 'objects/SDoorHorizontal.png');
+        this.load.image('sDoorV', 'objects/SDoorVertical.png');
+        this.load.image('inkWell', 'objects/InkWell.png');
+        this.load.image('bDoorOH', 'objects/BDoorOpenHorizontal.png');
+        this.load.image('bDoorOV', 'objects/BDoorOpenVertical.png');
+        this.load.image('bDoorCH', 'objects/BDoorClosedHorizontal.png');
+        this.load.image('bDoorCV', 'objects/BDoorClosedVertical.png');
         this.load.image('button', 'objects/Button.png');
         this.load.image('level0', 'levels/Level1.png');
         this.load.image('level1', 'levels/Level2.png');
@@ -114,81 +173,6 @@
         //Set the background origin to be at (0, 0) or top left corner of the image rather than the center of the image asset
         //we dont have one
         _this = this;
-        BDOORS =
-            [
-                [],
-                [new BDoor(_this, 6, 4, false)],
-                [new BDoor(_this, 2, 2, false)],
-                [],
-                [],
-                [],
-                [new BDoor(_this, 7, 0, false)],
-                []
-            ];
-        BUTTONS =
-            [
-                [],
-                [new Button(_this, 5, 4, BDOORS[1][0])],
-                [new Button(_this, 7, 1, BDOORS[2][0])],
-                [],
-                [],
-                [],
-                [new Button(_this, 2, 3, BDOORS[6][0])],
-                []
-            ];
-        INKWELLS =
-            [
-                [],
-                [],
-                [],
-                [],
-                [],
-                [new InkWell(_this, 7, 4, 0), new InkWell(_this, 5, 1, 3), new InkWell(_this, 5, 2, 3), new InkWell(_this, 2, 9, 5), new InkWell(_this, 4, 4, 6), new InkWell(_this, 3, 1, 8)],
-                [new InkWell(_this, 8, 4, 5)],
-                []
-            ];
-        ROCKS =
-                [
-                [],
-                [],
-                [],
-                [],
-                [new Rock(_this, 8, 8, 4)],
-                [],
-                [new Rock(_this, 15, 1, 2)],
-                [new Rock(_this, 15, 8, 3)]
-                ];
-        SDOORS =
-                [
-                [],
-                [],
-                [],
-                [new SDoor(_this, 13, 8, 4, 'leftRight')],
-                [],
-                [new SDoor(_this, 3, 1, 0, 'leftRight'), new SDoor(_this, 3, 2, 1, 'upDown'), new SDoor(_this, 3, 3, 9, 'leftRight')],
-                [new SDoor(_this, 3, 8, 0, 'leftRight')],
-                [new SDoor(_this, 8, 6, 0, 'leftRight')]
-                ];
-        for (let rocks of ROCKS) {
-            for (let rock of rocks) {
-                rock.disabled = true;
-            }
-        }
-        for (let sdoors of SDOORS) {
-            for (let sdoor of sdoors) {
-                sdoor.disabled = true;
-            }
-        }
-        for (let buttons of BUTTONS) {
-            for (let button of buttons) {
-                button.disabled = true;
-            }
-        }
-        for (let bdoors of BDOORS) {
-            for (let bdoor of bdoors) {
-                bdoor.disabled = true;
-            }
-        }
         //create all animations
         //this.anims.create({key: 'inkBlob', frames: this.anims.generateFrameNames('seacreatures', {prefix: 'blueJellyfish', end: 32, zeroPad: 4}), repeat: -1});
 
@@ -276,57 +260,18 @@
             this.startX = startX;
             this.startY = startY;
             this.levelNum = levelNum;
-            this.bdoors = bdoors;
-            this.inkWells = inkWells;
-            this.buttons = buttons;
             this.goalX = goalX;
             this.goalY = goalY;
             this.image = scene;
-            this.rocks = rocks;
-            this.sdoors = sdoors;
             //this.bitmap = new BitmapData(this);
         }
     }
     function makeLevel() {
-
-        for (let rocks of ROCKS) {
-            for (let rock of rocks) {
-                rock.disabled = true;
-            }
-        }
-        for (let sdoors of SDOORS) {
-            for (let sdoor of sdoors) {
-                sdoor.disabled = true;
-            }
-        }
-        for (let buttons of BUTTONS) {
-            for (let button of buttons) {
-                button.disabled = true;
-            }
-        }
-        for (let bdoors of BDOORS) {
-            for (let bdoor of bdoors) {
-                bdoor.disabled = true;
-            }
-        }
-        for (let rock of ROCKS[curLev]){
-            rock.disabled = false;
-            //rock.disableBody(false, false);
-        }
-        for (let sdoor of SDOORS[curLev]){
-            sdoor.disabled = false;
-        }
-        for (let button of BUTTONS[curLev]){
-            button.disabled = false;
-        }
-        for (let bdoor of BDOORS[curLev]){
-            bdoor.disabled = false;
-        }
         //forces them back to empty, in case they weren't already
         inkSpots = null;
         inkMap = null;
         let tempLev = new Level('level' + curLev, STARTINGINK[curLev], STARTX[curLev], STARTY[curLev], ROCKS[curLev], SDOORS[curLev], BDOORS[curLev], INKWELLS[curLev], BUTTONS[curLev], GOALX[curLev], GOALY[curLev], curLev);
-        levels.push(tempLev);
+        levels[curLev] = tempLev;
         console.log('level ' + curLev + ' made');
         console.log(tempLev);
         console.log("done with init1 loading current level");
@@ -449,6 +394,7 @@
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
                         targetRocks[i].posX -= 1;
                         targetRocks[i].x -= 80;
+                        //targetRocks[i].text.x -= 80;
                     }
                     console.log('left true')
                     return true;
@@ -468,6 +414,7 @@
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
                         targetRocks[i].posX += 1;
                         targetRocks[i].x += 80;
+                        //targetRocks[i].text.x += 80;
                     }
                     console.log('right true')
                     return true;
@@ -487,6 +434,7 @@
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
                         targetRocks[i].posY -= 1;
                         targetRocks[i].y -= 80;
+                        //targetRocks[i].text.y -= 80;
                     }
                     console.log('up true')
                     return true;
@@ -506,6 +454,7 @@
                     for (let i = targetRocks.length - 1; i >= 0; i--) {
                         targetRocks[i].posY += 1;
                         targetRocks[i].y += 80;
+                        //targetRocks[i].text.y += 80;
                     }
                     console.log('down true')
                     return true;
@@ -520,11 +469,14 @@
         size;
         //leftRight or upDown
         orientation;
+        text;
         constructor(scene, size, posX, posY, orientation) {
-            super('sDoor', scene, posX, posY, 'sDoor', false);
+            super('sDoor', scene, posX, posY, 'sDoor' + (orientation === 'leftRight'? 'H' : 'V'), false);
             this.size = size;
             this.orientation = orientation;
             console.log('create door with size:' + this.size + ' at ' + posX + ', ' + posY);
+            this.text = _this.add.text(posX * 80 + 32, posY * 80 + 15, this.size, {font:'bold 15px Arial', fill: '#000000'});
+            this.text.fontWeight = 'bold';
         }
         canThruSdoor(direction){
             console.log('canThruSdoor called');
@@ -538,15 +490,28 @@
     }
     class InkWell extends Obj{
         ink;
+        text;
         constructor(scene, ink, posX, posY) {
             super('inkWell', scene, posX, posY, 'inkWell', false);
             this.ink = ink;
             console.log('create inkWell with ink: ' + this.ink)
+            this.text = _this.add.text(posX * 80 + 30, posY * 80 + 20, this.ink, {font:'bold 20px Arial', fill: '#ffffff'});
+            this.text.fontWeight = 'bold';
         }
         collect() {
             player.inkLevel += this.ink;
+            console.log('inkCollected: +' + this.ink + " ink")
             this.ink = 0;
-            this.disableBody(true, true);
+            this.visible = false;
+            this.text.visible = false;
+            /*
+            for (let i = 0; i < inkWells.length; i++) {
+                if (this === inkWells[i]) {
+                    inkWells.splice(i, 1);
+                }
+            }
+
+             */
         }
     }
     class Button extends Obj{
@@ -558,11 +523,14 @@
             console.log('create button' + ' at: ' + posX + ', ' + posY + ' with connected door ' + linkedDoor);
             this.pressed = false;
         }
-        pressButton(){
+        updateButton(){
+            this.pressed = (inkMap[this.posY][this.posX] === 1);
             if(this.pressed){
                 this.linkedDoor.opener(true);
+                console.log('door opened: ' + this.linkedDoor)
             } else {
                 this.linkedDoor.opener(false);
+                console.log('door closed: ' + this.linkedDoor)
             }
         }
     }
@@ -572,10 +540,13 @@
         constructor(scene, posX, posY, opened) {
             super('bDoor', scene, posX, posY, 'bDoor', false);
             this.opened = opened;
+            this.orientation = orientation;
             console.log('create button door at ' + posX + ', ' + posY);
         }
         opener(opened){
             this.opened = opened;
+            this.image = 'bDoor' + (this.opened ? 'O' : 'C') + (this.orientation === 'leftRight' ? 'H' : 'V');
+            this.setTexture('bDoor' + (this.opened ? 'O' : 'C') + (this.orientation === 'leftRight' ? 'H' : 'V'));
         }
 
     }
@@ -678,12 +649,21 @@
                 player.inkLevel++;
                 inkMap[prevY][prevX] = 0;
             }
+            for (let button of buttons) {
+                button.updateButton();
+            }
+            if (isInkWell(player.posX, player.posY)) {
+                getInkWell(player.posX, player.posY).collect();
+            }
             playerInk.setPosition(player.x - 10, player.y - 10);
             playerInk.text = player.inkLevel;
             console.log('finished with the ink, starting rock check');
+            /*
             if (buttons.length > 0 && prevX === buttons[0].posX && prevY === buttons[0].posY){
                 buttons[0].pressButton();
             }
+
+             */
         }
         console.log(toString(inkMap));
         for (let i = 0; i < 10; i++) {
@@ -705,7 +685,7 @@
                 makeLevel();
             }
         }
-        else if (player.inkLevel <= 0) {
+        else if (player.inkLevel <= 0 && inkMap[player.posY][player.posX] !== 1) {
             console.log('YOU LOSE');
         }
         //update()
@@ -744,11 +724,33 @@
         }
         return null;
     }
+    function getBdoor(posX, posY) {
+        for (let bdoor of bdoors) {
+            if (bdoor.posX === posX && bdoor.posY === posY) {
+                return bdoor;
+            }
+        }
+        return null;
+    }
+    function getInkWell(posX, posY) {
+        for (let inkWell of inkWells) {
+            if (inkWell.posX === posX && inkWell.posY === posY) {
+                return inkWell;
+            }
+        }
+        return null;
+    }
     function isRock(posX, posY){
         return getRock(posX, posY) !== null;
     }
     function isSdoor(posX, posY){
         return getSdoor(posX, posY) !== null;
+    }
+    function isBdoor(posX, posY){
+        return getBdoor(posX, posY) !== null;
+    }
+    function isInkWell(posX, posY) {
+        return getInkWell(posX, posY) !== null;
     }
     function hasObject(posX, posY) {
         return getRock(posX, posY) !== null;
