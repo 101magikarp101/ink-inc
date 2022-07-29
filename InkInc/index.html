@@ -748,7 +748,7 @@
             if (isInkWell(player.posX, player.posY)) {
                 getInkWell(player.posX, player.posY).collect();
             }
-            playerInk.setPosition(player.x - 10, player.y - 10);
+            playerInk.setPosition(player.x - 10, player.y - 20);
             for (var rock of rocks){
                 rock.text.setPosition(rock.posX * 80 + 30, rock.posY * 80 + 20);
             }
