@@ -159,9 +159,10 @@
         this.load.image('level2', 'levels/Level3.png');
         this.load.image('level3', 'levels/Level4.png');
         this.load.image('level4', 'levels/Level5.png');
-        this.load.image('level5', 'levels/Level6.png');
-        this.load.image('level6', 'levels/Level7.png');
-        this.load.image('level7', 'levels/Level8.png');
+        this.load.image('level5', 'levels/Level5.png');
+        this.load.image('level6', 'levels/Level6.png');
+        this.load.image('level7', 'levels/Level7.png');
+        this.load.image('level8', 'levels/Level8.png');
 
         //let background = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'sky').setOrigin(0, 0);
         //this.load.tilemapTiledJSON('tilemap', "texture.json");
@@ -249,12 +250,6 @@
         startX;
         startY;
         constructor(scene, startingInk, startX, startY, rocks, sdoors, bdoors, inkWells, buttons, goalX, goalY, levelNum) {
-            /*
-            player.inkLevel = startingInk;
-            player.x = startX * 80;
-            player.y = startY * 80;
-            player.posX = startX;
-            player.posY = startY;*/
             _this.add.image(400, 400, scene)
             this.startingInk = startingInk;
             this.startX = startX;
@@ -264,10 +259,40 @@
             this.goalY = goalY;
             this.image = scene;
             //this.bitmap = new BitmapData(this);
+            //starting to fill out rocks, sdoors, buttons, inkwells, etc
+            this.rocks = new Array(0);
+            //size, x, y
+            for (let rock of ROCKS[curLev]) {
+                this.rocks.push(new Rock(_this, rock[0], rock[1], rock[2]));
+            }
+            this.sdoors = new Array(0);
+            //size, x, y, direction
+            for (let sdoor of SDOORS[curLev]) {
+                this.sdoors.push(new SDoor(_this, sdoor[0], sdoor[1], sdoor[2], sdoor[3]));
+            }
+            this.bdoors = new Array(0);
+            //x, y
+            for (let bdoor of BDOORS[curLev]) {
+                this.bdoors.push(new BDoor(_this, bdoor[0], bdoor[1], bdoor[2], bdoor[3]));
+            }
+            this.buttons = new Array(0);
+            //x, y, arrayPos of connected bDoor
+            for (let button of BUTTONS[curLev]) {
+                this.buttons.push(new Button(_this, button[0], button[1], this.bdoors[button[3]]));
+            }
+            this.inkWells = new Array(0);
+            //ink, x, y
+            for (let inkWell of INKWELLS[curLev]) {
+                this.inkWells.push(new InkWell(_this, inkWell[0], inkWell[1], inkWell[2]));
+            }
         }
     }
     function makeLevel() {
         //forces them back to empty, in case they weren't already
+        rocks = null;
+        sdoors = null;
+        buttons = null;
+        bdoors = null;
         inkSpots = null;
         inkMap = null;
         let tempLev = new Level('level' + curLev, STARTINGINK[curLev], STARTX[curLev], STARTY[curLev], ROCKS[curLev], SDOORS[curLev], BDOORS[curLev], INKWELLS[curLev], BUTTONS[curLev], GOALX[curLev], GOALY[curLev], curLev);
@@ -306,7 +331,7 @@
         //player.y = levels[curLev].startY * 80 + 40;
         player.inkLevel = levels[curLev].startingInk;
         console.log('finished init 2 player creation');
-        playerInk = _this.add.text(player.x - 10, player.y - 10, '' + player.inkLevel, {fontSize: '16px', fill: '#ffffff'});
+        playerInk = _this.add.text(player.x - 10, player.y - 10, '' + player.inkLevel, {font:'bold 15px Arial', fill: '#ffffff'});
         playerInk.text = levels[curLev].inkLevel;
         rocks = levels[curLev].rocks;
         console.log("done with init4, rocks");
@@ -348,10 +373,12 @@
 
     class Rock extends Obj{
         size;
+        text;
         constructor (scene, size, posX, posY) {
             super('rock', scene, posX, posY, 'rock', true);
             this.size = size;
             console.log('create rock size:' + this.size + ' at ' + posX + ', ' + posY);
+            this.text = _this.add.text(this.posX * 80 + 30, this.posY * 80 + 20, '' + this.size, {font:'bold 32px Arial', fill: '#abdcff'});
         }
         /* eliah's version
         push(posXChange, posYChange){
@@ -537,8 +564,13 @@
 
     class BDoor extends Obj{
         opened;
-        constructor(scene, posX, posY, opened) {
-            super('bDoor', scene, posX, posY, 'bDoor', false);
+        orientation;
+        constructor(scene, posX, posY, opened, orientation) {
+            //if (opened){
+            //    this.superr += 'O';
+            //}
+            //if (orientation === 'leftRight')
+            super('bDoor', scene, posX, posY, 'bDoor' + (opened ? 'O' : 'C') + (orientation === 'leftRight' ? 'H' : 'V'), false);
             this.opened = opened;
             this.orientation = orientation;
             console.log('create button door at ' + posX + ', ' + posY);
@@ -547,6 +579,15 @@
             this.opened = opened;
             this.image = 'bDoor' + (this.opened ? 'O' : 'C') + (this.orientation === 'leftRight' ? 'H' : 'V');
             this.setTexture('bDoor' + (this.opened ? 'O' : 'C') + (this.orientation === 'leftRight' ? 'H' : 'V'));
+        }
+        canThruBdoor(direction){
+            console.log('canThruBdoor called');
+            if ((direction === DOWN || direction === UP) && this.orientation === 'upDown'){
+                return this.opened;
+            } else if ((direction === LEFT || direction === RIGHT) && this.orientation === 'leftRight'){
+                return this.opened;
+            }
+            return false;
         }
 
     }
@@ -565,7 +606,7 @@
         //let diMoveX;
         //let diMoveY;
         let direction;
-        if ((player.inkLevel <= 0 && inkMap[player.posX][player.posY]===0))
+        if ((player.inkLevel <= 0 && inkMap[player.posY][player.posX]!== 1))
         {
             console.log('No ink left to grab or move.');
             return;
@@ -576,8 +617,7 @@
         if (isValidPos(prevX - 1, prevY) && keyA.isDown && !keyD.isDown && !keyW.isDown && !keyS.isDown && !isThruWall(prevX, prevY, prevX - 1, prevY)) {
             direction = LEFT
             console.log('left pressed');
-            if (isRock(player.posX-1, player.posY) && getRock(player.posX-1, player.posY).pushRock(direction)
-                || !hasObject(player.posX-1, player.posY))
+            if (isRock(player.posX-1, player.posY) && getRock(player.posX-1, player.posY).pushRock(direction))
                 /* || (objects[player.posY][player.posX-1].type === 'sDoor' && player.inkLevel <= objects(player.posY][player.posX-1].size)*/{
                 console.log('left push should have been called');
                 player.x -= 80;
@@ -588,12 +628,20 @@
                 player.posX -= 1;
                 console.log('moving thru door: x: ' + player.posX + ', y: ' + player.posY);
                 moved = true;
+            } else if (isBdoor(player.posX-1, player.posY) && getBdoor(player.posX-1, player.posY).canThruBdoor(direction)) {
+                player.x -= 80;
+                player.posX -= 1;
+                console.log('moving thru bdoor: x: ' + player.posX + ', y: ' + player.posY);
+                moved = true;
+            } else if (!hasObject(player.posX-1, player.posY)){
+                player.x -= 80;
+                player.posX -= 1;
+                moved = true;
             }
         } else if (isValidPos(prevX + 1, prevY) && !keyA.isDown && keyD.isDown && !keyW.isDown && !keyS.isDown && !isThruWall(prevX, prevY, prevX + 1, prevY)) {
             direction = 'right'
             console.log('right pressed');
-            if (isRock(player.posX+1, player.posY) && getRock(player.posX+1, player.posY).pushRock(direction)
-                || !hasObject(player.posX+1, player.posY)) {
+            if (isRock(player.posX+1, player.posY) && getRock(player.posX+1, player.posY).pushRock(direction)) {
                 console.log('right push should have been called');
                 player.x += 80;
                 player.posX += 1;
@@ -603,12 +651,20 @@
                 player.posX += 1;
                 console.log('moving thru door: x: ' + player.posX + ', y: ' + player.posY);
                 moved = true;
+            } else if (isBdoor(player.posX+1, player.posY) && getBdoor(player.posX+1, player.posY).canThruBdoor(direction)) {
+                player.x += 80;
+                player.posX += 1;
+                console.log('moving thru bdoor: x: ' + player.posX + ', y: ' + player.posY);
+                moved = true;
+            } else if (!hasObject(player.posX+1, player.posY)){
+                player.x += 80;
+                player.posX += 1;
+                moved = true;
             }
         } else if (isValidPos(prevX, prevY - 1) && !keyA.isDown && !keyD.isDown && keyW.isDown && !keyS.isDown && !isThruWall(prevX, prevY, prevX, prevY - 1)) {
             direction = 'up'
             console.log('up pressed');
-            if (isRock(player.posX, player.posY-1) && getRock(player.posX, player.posY-1).pushRock(direction)
-                || !hasObject(player.posX, player.posY-1)) {
+            if (isRock(player.posX, player.posY-1) && getRock(player.posX, player.posY-1).pushRock(direction)) {
                 console.log('up push should have been called');
                 player.y -= 80;
                 player.posY -= 1;
@@ -618,12 +674,20 @@
                 player.posY -= 1;
                 console.log('moving thru door: x: ' + player.posX + ', y: ' + player.posY);
                 moved = true;
+            } else if (isBdoor(player.posX, player.posY-1) && getBdoor(player.posX, player.posY-1).canThruBdoor(direction)) {
+                player.y -= 80;
+                player.posY -= 1;
+                console.log('moving thru bdoor: x: ' + player.posX + ', y: ' + player.posY);
+                moved = true;
+            } else if (!hasObject(player.posX, player.posY-1)){
+                player.y -= 80;
+                player.posY -= 1;
+                moved = true;
             }
         } else if (isValidPos(prevX, prevY + 1) && !keyA.isDown && !keyD.isDown && !keyW.isDown && keyS.isDown && !isThruWall(prevX, prevY, prevX, prevY + 1)) {
             direction = 'down';
             console.log('down pressed');
-            if (isRock(player.posX, player.posY+1) && getRock(player.posX, player.posY+1).pushRock(direction)
-                || !hasObject(player.posX, player.posY+1)) {
+            if (isRock(player.posX, player.posY+1) && getRock(player.posX, player.posY+1).pushRock(direction)) {
                 console.log('down push should have been called');
                 player.y += 80;
                 player.posY += 1;
@@ -632,6 +696,15 @@
                 player.y += 80;
                 player.posY += 1;
                 console.log('moving thru door: x: ' + player.posX + ', y: ' + player.posY);
+                moved = true;
+            } else if (isBdoor(player.posX, player.posY+1) && getBdoor(player.posX, player.posY+1).canThruBdoor(direction)) {
+                player.y += 80;
+                player.posY += 1;
+                console.log('moving thru bdoor: x: ' + player.posX + ', y: ' + player.posY);
+                moved = true;
+            } else if (!hasObject(player.posX, player.posY+1)){
+                player.y += 80;
+                player.posY += 1;
                 moved = true;
             }
         }
@@ -656,6 +729,9 @@
                 getInkWell(player.posX, player.posY).collect();
             }
             playerInk.setPosition(player.x - 10, player.y - 10);
+            for (var rock of rocks){
+                rock.text.setPosition(rock.posX * 80 + 30, rock.posY * 80 + 20);
+            }
             playerInk.text = player.inkLevel;
             console.log('finished with the ink, starting rock check');
             /*
@@ -679,7 +755,7 @@
         if (player.posY === levels[curLev].goalY && player.posX === levels[curLev].goalX){
             console.log('YOU WIN LEVEL ' + curLev);
             curLev++;
-            if (curLev === 8) {
+            if (curLev === 9) {
                 //win screen
             } else {
                 makeLevel();
@@ -753,7 +829,7 @@
         return getInkWell(posX, posY) !== null;
     }
     function hasObject(posX, posY) {
-        return getRock(posX, posY) !== null;
+        return getRock(posX, posY) !== null || getSdoor(posX, posY) !== null || getBdoor(posX, posY) !== null;
         //|| door || ink etc.
     }
     /*
