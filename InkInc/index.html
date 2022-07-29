@@ -137,12 +137,15 @@
     //Keyboard controls
     var cursors;
     var space;
-    var keyA, keyD, keyW, keyS;
+    var keyA, keyD, keyW, keyS, keyR;
 
     var graphics;
 
     function preload() {
-        this.load.image('inkBlob', 'inkblob/InkBlob.png');
+        this.load.image('inkBlobL', 'inkblob/InkBlobLeft.png');
+        this.load.image('inkBlobR', 'inkblob/InkBlobRight.png');
+        this.load.image('inkBlobU', 'inkblob/InkBlobUp.png');
+        this.load.image('inkBlobD', 'inkblob/InkBlobDown.png');
         this.load.image('inkSpot', 'levels/InkSploch.png');
         this.load.image('greenTile', 'levels/GreenTile.png')
         this.load.image('rock', 'objects/Boulder.png');
@@ -199,12 +202,14 @@
         keyD = _this.input.keyboard.addKey('D');
         keyW = _this.input.keyboard.addKey('W');
         keyS = _this.input.keyboard.addKey('S');
+        keyR = _this.input.keyboard.addKey('R');
         space = _this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         keyA.on('down', move);
         keyD.on('down', move);
         keyW.on('down', move);
         keyS.on('down', move);
+        keyR.on('down', makeLevel);
 
         graphics = this.add.graphics();
         console.log("done with create")
@@ -226,14 +231,29 @@
         //x is the pixel position on the screen
         posX;
         posY;
-
+        orientation = DOWN;
         constructor(scene, posX, posY, spritesheet, animations) {
             super(scene, posX * 80 + 40, posY * 80 + 40, spritesheet);
             this.animations = animations;
             this.posX = posX;
             this.posY = posY;
+            this.updateOrientation(DOWN);
             scene.add.existing(this);
             this.setScale(0.5);
+        }
+        updateOrientation (direction) {
+            this.orientation = direction;
+            let addon;
+            if (direction === DOWN){
+                addon = 'D';
+            } else if (direction === RIGHT){
+                addon = 'R';
+            } else if (direction === LEFT){
+                addon = 'L';
+            } else if (direction === UP){
+                addon = 'U';
+            }
+            this.setTexture('inkBlob' + addon);
         }
     }
     class Level {
@@ -733,6 +753,7 @@
                 rock.text.setPosition(rock.posX * 80 + 30, rock.posY * 80 + 20);
             }
             playerInk.text = player.inkLevel;
+            player.updateOrientation(direction);
             console.log('finished with the ink, starting rock check');
             /*
             if (buttons.length > 0 && prevX === buttons[0].posX && prevY === buttons[0].posY){
